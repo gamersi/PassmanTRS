@@ -53,7 +53,13 @@
             <div class="cardBtns">
                 <button class="btn btn-icon btn-primary"><FaEye /></button>
                 <button class="btn btn-icon btn-primary"><FaPen /></button>
-                <button class="btn btn-icon btn-danger"><FaTrash /></button>
+                <button class="btn btn-icon btn-danger" on:click={
+                    () => {
+                        invoke('delete_password', {id: password.id}).then(() => {
+                            getPasswords();
+                        });
+                    }
+                }><FaTrash /></button>
             </div>
         </div>
         {/each}

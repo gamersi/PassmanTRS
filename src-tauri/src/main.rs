@@ -131,6 +131,37 @@ fn add_password(name: String, username: String, mut password: String, url: Strin
 }
 
 #[tauri::command]
+fn delete_password(id: i32) {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    let mut passwords: Vec<Password> = if contents.is_empty() {
+        vec![]
+    } else {
+        serde_json::from_str(&contents).unwrap()
+    };
+    // remove password from vector
+    passwords.remove(id as usize);
+    //reset ids
+    for (i, password) in passwords.iter_mut().enumerate() {
+        password.id = i as i32;
+    }
+    // serialize the vector to json and write it back to the file
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+    // set cursor to 0
+    file.seek(SeekFrom::Start(0)).unwrap();
+    // write contents to file
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+}
+
+#[tauri::command]
 fn close_add_password(app: tauri::AppHandle) {
     app.get_window("addpw").unwrap().close().unwrap();
     app.emit_all("refresh_passwords", ()).unwrap();
@@ -148,7 +179,7 @@ fn decrypt(password: String) -> String {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_passwords, open_add_password, add_password, close_add_password])
+        .invoke_handler(tauri::generate_handler![get_passwords, open_add_password, add_password, delete_password, close_add_password])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
