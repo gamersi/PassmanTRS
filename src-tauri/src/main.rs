@@ -168,7 +168,7 @@ async fn open_add_password(app: tauri::AppHandle) {
     let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
         .build()
         .unwrap()
-        .set_title("Add Password")
+        .set_title("Passwort hinzufügen")
         .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
         .ok();
 }
@@ -182,7 +182,7 @@ async fn open_edit_password(app: tauri::AppHandle, id: i32) {
     )
     .build()
     .unwrap()
-    .set_title("Edit Password")
+    .set_title("Passwort bearbeiten")
     .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
     .ok();
 }
@@ -196,7 +196,7 @@ async fn open_view_password(app: tauri::AppHandle, id: i32) {
     )
     .build()
     .unwrap()
-    .set_title("View Password")
+    .set_title("Passwortdetails")
     .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
     .ok();
 }
