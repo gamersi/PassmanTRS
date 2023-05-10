@@ -41,3 +41,9 @@
         <button type="submit" class="btn btn-primary">Passwort hinzufügen</button>
     </form>
 </main>
+
+<style>
+    .mb-3 {
+        margin-bottom: 5px;
+    }
+</style>

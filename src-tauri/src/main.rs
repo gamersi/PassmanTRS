@@ -3,12 +3,12 @@
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
-use std::{path::Path, io::Write};
+use serde::{Deserialize, Serialize};
 use serde_json;
-use serde::{Serialize, Deserialize};
-use tauri::Manager;
 use std::io::prelude::*;
 use std::io::SeekFrom;
+use std::{io::Write, path::Path};
+use tauri::Manager;
 
 // Password struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -29,7 +29,10 @@ fn get_os() -> String {
 fn get_passwords_file_path() -> String {
     let is_windows = get_os() == "windows";
     let path = if is_windows {
-        let mut path = Path::new(&std::env::var("APPDATA").unwrap()).to_str().unwrap().to_string();
+        let mut path = Path::new(&std::env::var("APPDATA").unwrap())
+            .to_str()
+            .unwrap()
+            .to_string();
         path.push_str("\\passmantrs\\passwords.json");
         path
     } else {
@@ -85,11 +88,115 @@ fn get_passwords() -> Vec<Password> {
 }
 
 #[tauri::command]
+fn get_password(id: i32) -> Password {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.len() == 0 {
+        contents.push_str("[]");
+        file.write_fmt(format_args!("{}", contents)).unwrap();
+    }
+    // create contentsJson variable to store contents as json
+    let contents_json: serde_json::Value = serde_json::from_str(&contents).unwrap();
+    // decrypt password
+    let password: Password = Password {
+        id: contents_json[id as usize]["id"]
+            .to_string()
+            .parse::<i32>()
+            .unwrap(),
+        name: contents_json[id as usize]["name"].to_string(),
+        username: contents_json[id as usize]["username"].to_string(),
+        password: decrypt(contents_json[id as usize]["password"].to_string()),
+        url: contents_json[id as usize]["url"].to_string(),
+        notes: contents_json[id as usize]["notes"].to_string(),
+    };
+    // return password
+    password
+}
+
+#[tauri::command]
+fn edit_password(
+    id: i32,
+    name: String,
+    username: String,
+    password: String,
+    url: String,
+    notes: String,
+) {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.len() == 0 {
+        contents.push_str("[]");
+        file.write_fmt(format_args!("{}", contents)).unwrap();
+    }
+    // create contentsJson variable to store contents as json
+    let mut contents_json: serde_json::Value = serde_json::from_str(&contents).unwrap();
+    // find password to edit by id
+    let mut password_to_edit = contents_json[id as usize].clone();
+    // edit password
+    password_to_edit["name"] = serde_json::Value::from(name);
+    password_to_edit["username"] = serde_json::Value::from(username);
+    password_to_edit["password"] = serde_json::Value::from(encrypt(password));
+    password_to_edit["url"] = serde_json::Value::from(url);
+    password_to_edit["notes"] = serde_json::Value::from(notes);
+    // replace password in contentsJson
+    contents_json[id as usize] = password_to_edit;
+    // convert contentsJson back to string
+    let contents_string = serde_json::to_string(&contents_json).unwrap();
+    // set cursor to 0
+    file.seek(SeekFrom::Start(0)).unwrap();
+    // write contents to file
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+}
+
+#[tauri::command]
 async fn open_add_password(app: tauri::AppHandle) {
-  let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
+    let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
+        .build()
+        .unwrap()
+        .set_title("Add Password")
+        .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+        .ok();
+}
+
+#[tauri::command]
+async fn open_edit_password(app: tauri::AppHandle, id: i32) {
+    let _window = tauri::WindowBuilder::new(
+        &app,
+        "editpw",
+        tauri::WindowUrl::App(format!("editPw?id={}", id).into()),
+    )
     .build()
     .unwrap()
-    .set_title("Add Password")
+    .set_title("Edit Password")
+    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+    .ok();
+}
+
+#[tauri::command]
+async fn open_view_password(app: tauri::AppHandle, id: i32) {
+    let _window = tauri::WindowBuilder::new(
+        &app,
+        "viewpw",
+        tauri::WindowUrl::App(format!("viewPw?id={}", id).into()),
+    )
+    .build()
+    .unwrap()
+    .set_title("View Password")
     .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
     .ok();
 }
@@ -167,6 +274,18 @@ fn close_add_password(app: tauri::AppHandle) {
     app.emit_all("refresh_passwords", ()).unwrap();
 }
 
+#[tauri::command]
+fn close_edit_password(app: tauri::AppHandle) {
+    app.get_window("editpw").unwrap().close().unwrap();
+    app.emit_all("refresh_passwords", ()).unwrap();
+}
+
+#[tauri::command]
+fn close_view_password(app: tauri::AppHandle) {
+    app.get_window("viewpw").unwrap().close().unwrap();
+    // app.emit_all("refresh_passwords", ()).unwrap();
+}
+
 // encrypt using top of the line encryption named PBKDF2
 fn encrypt(password: String) -> String {
     password
@@ -176,10 +295,21 @@ fn decrypt(password: String) -> String {
     password
 }
 
-
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_passwords, open_add_password, add_password, delete_password, close_add_password])
+        .invoke_handler(tauri::generate_handler![
+            get_passwords,
+            get_password,
+            edit_password,
+            open_add_password,
+            open_edit_password,
+            open_view_password,
+            add_password,
+            delete_password,
+            close_add_password,
+            close_edit_password,
+            close_view_password
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

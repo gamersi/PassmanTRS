@@ -51,8 +51,16 @@
                 <p class="username">{password.username || "Kein Benutzername"}</p>
             </div>
             <div class="cardBtns">
-                <button class="btn btn-icon btn-primary"><FaEye /></button>
-                <button class="btn btn-icon btn-primary"><FaPen /></button>
+                <button class="btn btn-icon btn-primary" on:click={
+                    () => {
+                        invoke('open_view_password', {id: password.id});
+                    }
+                }><FaEye /></button>
+                <button class="btn btn-icon btn-primary" on:click={
+                    () => {
+                        invoke('open_edit_password', {id: password.id});
+                    }
+                }><FaPen /></button>
                 <button class="btn btn-icon btn-danger" on:click={
                     () => {
                         invoke('delete_password', {id: password.id}).then(() => {
