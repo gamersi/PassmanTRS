@@ -64,7 +64,6 @@
 </script>
 
 <main class="container">
-	<h3>Masterpasswort: {$masterPassword}</h3>
 	<div class="row">
 		<h1>Passwörter</h1>
 		<div class="btn-group">
@@ -74,6 +73,9 @@
 		</div>
 	</div>
 	<div class="contents">
+		{#if $passwords.length === 0}
+			<p>Keine Passwörter vorhanden</p>
+		{/if}
 		{#each $passwords as password}
 			<div class="card">
 				<div class="userInfo">
