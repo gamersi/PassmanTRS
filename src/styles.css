@@ -17,7 +17,8 @@
 a {
   font-weight: 500;
   color: #646cff;
-  text-decoration: inherit;
+  text-decoration: none;
+  transition: color 0.25s;
 }
 
 a:hover {
@@ -28,23 +29,25 @@ input,
 button {
   border-radius: 8px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 10px;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
   color: #0f0f0f;
   background-color: #ffffff;
-  transition: border-color 0.25s;
+  transition: all 0.25s;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
 }
 
-button {
-  cursor: pointer;
+input {
+  cursor: text;
 }
 
 button:hover {
   border-color: #396cd8;
 }
+
 button:active {
   border-color: #396cd8;
   background-color: #e8e8e8;
@@ -53,6 +56,32 @@ button:active {
 input,
 button {
   outline: none;
+}
+
+.alert {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9em;
+  font-weight: 500;
+  font-family: inherit;
+  color: #0f0f0f;
+  background-color: #ffffff;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+}
+
+.alert-warning {
+  border-color: #f5a623;
+  background-color: #fff8e5;
+}
+
+.alert-error {
+  border-color: #d0021b;
+  background-color: #ffebee;
+}
+
+.alert-success {
+  border-color: #7ed321;
+  background-color: #e8f5e9;
 }
 
 @media (prefers-color-scheme: dark) {
