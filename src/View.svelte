@@ -2,6 +2,9 @@
     import { invoke } from '@tauri-apps/api/tauri'
 	import type { Password } from './utils/types';
 
+    // @ts-ignore
+    const isTauri = typeof window !== "undefined" && window.__TAURI__;
+
     // get password id from url params
     const passwordId = new URLSearchParams(window.location.search).get('id')
 
@@ -14,20 +17,39 @@
         notes: 'Loading...'
     }
 
-    invoke('get_password', {id: parseInt(passwordId)}).then((res: Password) => {
-        res.name = res.name.replace(/^"(.*)"$/, '$1');
-        res.username = res.username.replace(/^"(.*)"$/, '$1');
-        res.password = res.password.replace(/^"(.*)"$/, '$1');
-        res.url = res.url.replace(/^"(.*)"$/, '$1');
-        res.notes = res.notes.replace(/^"(.*)"$/, '$1');
-        // replace empty strings with n/a
-        res.name = res.name === '' ? 'n/a' : res.name
-        res.username = res.username === '' ? 'n/a' : res.username
-        res.password = res.password === '' ? 'n/a' : res.password
-        res.url = res.url === '' ? 'n/a' : res.url
-        res.notes = res.notes === '' ? 'n/a' : res.notes
-        password = res
-    })
+    if (!isTauri) {
+        password = {
+            id: 0,
+            name: 'Test',
+            username: 'Test',
+            password: 'Test',
+            url: 'Test',
+            notes: 'Test'
+        }
+    } else {
+        invoke('get_password', {id: parseInt(passwordId)}).then((res: Password) => {
+            res.name = res.name.replace(/^"(.*)"$/, '$1');
+            res.username = res.username.replace(/^"(.*)"$/, '$1');
+            res.password = res.password.replace(/^"(.*)"$/, '$1');
+            res.url = res.url.replace(/^"(.*)"$/, '$1');
+            res.notes = res.notes.replace(/^"(.*)"$/, '$1');
+            // replace empty strings with n/a
+            res.name = res.name === '' ? 'n/a' : res.name
+            res.username = res.username === '' ? 'n/a' : res.username
+            res.password = res.password === '' ? 'n/a' : res.password
+            res.url = res.url === '' ? 'n/a' : res.url
+            res.notes = res.notes === '' ? 'n/a' : res.notes
+            password = res
+        })
+    }
+
+    function closeWindow() {
+        if (!isTauri) {
+            alert('Dieser Button funktioniert nur in der Tauri App')
+            return
+        }
+        invoke('close_view_password')
+    }
 </script>
 
 <main class="container">
@@ -52,7 +74,7 @@
         <label for="notes" class="form-label">Notizen</label>
         <input type="text" class="form-control" id="notes" placeholder="Notizen" value="{password.notes}" readonly>
     </div>
-    <button type="button" class="btn btn-primary" on:click="{() => invoke('close_view_password')}">Schließen</button>
+    <button type="button" class="btn btn-primary" on:click="{() => closeWindow()}">Schließen</button>
 </main>
 
 <style>

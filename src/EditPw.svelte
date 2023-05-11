@@ -2,6 +2,9 @@
     import { invoke } from '@tauri-apps/api/tauri'
 	import type { Password } from './utils/types';
 
+    // @ts-ignore
+    const isTauri = typeof window !== "undefined" && window.__TAURI__;
+
     const passwordId = new URLSearchParams(window.location.search).get('id')
     let password: Password = {
         id: 0,
@@ -12,16 +15,31 @@
         notes: 'Loading...'
     }
 
-    invoke('get_password', {id: parseInt(passwordId)}).then((res: Password) => {
-        res.name = res.name.replace(/^"(.*)"$/, '$1');
-        res.username = res.username.replace(/^"(.*)"$/, '$1');
-        res.password = res.password.replace(/^"(.*)"$/, '$1');
-        res.url = res.url.replace(/^"(.*)"$/, '$1');
-        res.notes = res.notes.replace(/^"(.*)"$/, '$1');
-        password = res
-    })
+    if (!isTauri) {
+        password = {
+            id: 0,
+            name: 'Test',
+            username: 'Test',
+            password: 'Test',
+            url: 'Test',
+            notes: 'Test'
+        }
+    } else {
+        invoke('get_password', {id: parseInt(passwordId)}).then((res: Password) => {
+            res.name = res.name.replace(/^"(.*)"$/, '$1');
+            res.username = res.username.replace(/^"(.*)"$/, '$1');
+            res.password = res.password.replace(/^"(.*)"$/, '$1');
+            res.url = res.url.replace(/^"(.*)"$/, '$1');
+            res.notes = res.notes.replace(/^"(.*)"$/, '$1');
+            password = res
+        })
+    }
 
     function editPassword(event) {
+        if (!isTauri) {
+            alert('Dieser Button funktioniert nur in der Tauri App')
+            return
+        }
         invoke('edit_password', {
             id: parseInt(passwordId),
             name: event.target.name.value,
