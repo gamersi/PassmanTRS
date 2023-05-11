@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri'
 	import type { Password } from './utils/types';
+    import { parseURL } from './utils/utillities';
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -45,7 +46,7 @@
             name: event.target.name.value,
             username: event.target.username.value,
             password: event.target.password.value,
-            url: event.target.url.value,
+            url: parseURL(event.target.url.value),
             notes: event.target.notes.value
         }).then((res) => {
             console.log(res)

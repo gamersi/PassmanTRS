@@ -1,17 +1,18 @@
 <script lang="ts">
 	import {invoke} from "@tauri-apps/api/tauri";
 	import {listen} from "@tauri-apps/api/event";
-	import {writable} from "svelte/store";
+	import { open } from '@tauri-apps/api/shell';
 	import type {Password} from "./utils/types";
 	import FaPlus from "svelte-icons/fa/FaPlus.svelte";
 	import FaEye from "svelte-icons/fa/FaEye.svelte";
 	import FaPen from "svelte-icons/fa/FaPen.svelte";
 	import FaTrash from "svelte-icons/fa/FaTrash.svelte";
+	import FaLink from 'svelte-icons/fa/FaLink.svelte'
+	import { passwords, masterPassword } from "./utils/stores";
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
-
-	const passwords = writable<Password[]>([]);
+	
 	passwords.subscribe((value) => {
 		console.log("passwords have been updated:", value);
 	});
@@ -56,14 +57,19 @@
         }
 		invoke("open_add_password");
 	}
+
+	function openURL(url: string) {
+		open(url);
+	}
 </script>
 
 <main class="container">
+	<h3>Masterpasswort: {$masterPassword}</h3>
 	<div class="row">
 		<h1>Passwörter</h1>
 		<div class="btn-group">
 			<button class="btn btn-icon btn-primary" on:click={openAddPassword}>
-				<FaPlus class="fa-plus" />
+				<FaPlus />
 			</button>
 		</div>
 	</div>
@@ -75,6 +81,19 @@
 					<p class="username">{password.username || "Kein Benutzername"}</p>
 				</div>
 				<div class="card-btns btn-group">
+					{#if password.url}
+					<button
+						class="btn btn-icon btn-primary"
+						on:click={() => {
+							if (!isTauri) {
+								alert("Diese Funktion ist nur in der Desktop App verfügbar!");
+								return;
+							}
+							openURL(password.url);
+						}}>
+						<FaLink />
+					</button>
+					{/if}
 					<button
 						class="btn btn-icon btn-primary"
 						on:click={() => {
@@ -84,7 +103,7 @@
                             }
 							invoke("open_view_password", {id: password.id});
 						}}>
-						<FaEye class="fa-eye" />
+						<FaEye />
 					</button>
 					<button
 						class="btn btn-icon btn-primary"
@@ -95,7 +114,7 @@
                             }
 							invoke("open_edit_password", {id: password.id});
 						}}>
-						<FaPen class="fa-pen" />
+						<FaPen />
 					</button>
 					<button
 						class="btn btn-icon btn-danger"
@@ -108,7 +127,7 @@
 								getPasswords();
 							});
 						}}>
-						<FaTrash class="fa-trash" />
+						<FaTrash />
 					</button>
 				</div>
 			</div>
