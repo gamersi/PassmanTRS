@@ -9,6 +9,7 @@ use std::io::prelude::*;
 use std::io::SeekFrom;
 use std::{io::Write, path::Path};
 use tauri::Manager;
+use bcrypt::{hash, verify};
 
 // Password struct
 #[derive(Debug, Serialize, Deserialize)]
@@ -44,6 +45,32 @@ fn get_passwords_file_path() -> String {
     // check if folder exists and create if it doesn't
     let mut folder_path = path.clone();
     for _ in "passwords.json".chars() {
+        folder_path.pop();
+    }
+    if !Path::new(&folder_path).exists() {
+        std::fs::create_dir_all(&folder_path).unwrap();
+    }
+    path
+}
+
+fn get_master_password_file_path() -> String {
+    let is_windows = get_os() == "windows";
+    let path = if is_windows {
+        let mut path = Path::new(&std::env::var("APPDATA").unwrap())
+            .to_str()
+            .unwrap()
+            .to_string();
+        path.push_str("\\passmantrs\\master_password.txt");
+        path
+    } else {
+        let mut path = String::new();
+        path.push_str(&std::env::var("HOME").unwrap());
+        path.push_str("/.config/passmantrs/master_password.txt");
+        path
+    };
+    // check if folder exists and create if it doesn't
+    let mut folder_path = path.clone();
+    for _ in "master_password.txt".chars() {
         folder_path.pop();
     }
     if !Path::new(&folder_path).exists() {
@@ -286,7 +313,49 @@ fn close_view_password(app: tauri::AppHandle) {
     // app.emit_all("refresh_passwords", ()).unwrap();
 }
 
-// encrypt using top of the line encryption named PBKDF2
+#[tauri::command]
+fn delete_passwords() {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let passwords: Vec<Password> = vec![];
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+    // set cursor to 0
+    file.seek(SeekFrom::Start(0)).unwrap();
+    // write contents to file
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+}
+
+#[tauri::command]
+fn validate_master_password(password: String) -> bool {
+    let path = get_master_password_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.is_empty() {
+        delete_passwords();
+        let hashed_password = hash(password.as_bytes(), 12).unwrap();
+        file.write_all(hashed_password.as_bytes()).unwrap();
+        file.set_len(hashed_password.len() as u64).unwrap();
+        return true;
+    }
+    if verify(password.as_bytes(), &contents).unwrap() {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 fn encrypt(password: String) -> String {
     password
 }
@@ -308,7 +377,8 @@ fn main() {
             delete_password,
             close_add_password,
             close_edit_password,
-            close_view_password
+            close_view_password,
+            validate_master_password
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

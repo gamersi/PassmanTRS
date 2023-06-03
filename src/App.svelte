@@ -1,5 +1,7 @@
 <script lang="ts">
   import {Router, Route, Link} from 'svelte-navigator'
+  import { invoke } from '@tauri-apps/api/tauri';
+  import { message } from '@tauri-apps/api/dialog';
   import Home from './Home.svelte'
 	import AddPw from './AddPw.svelte';
 	import View from './View.svelte';
@@ -29,12 +31,19 @@
       const storedTime = localStorage.getItem('masterPassword_time');
       const currentTime = new Date().getTime();
       if (currentTime - parseInt(storedTime) <= EXPIRATION_TIME) {
-        masterPassword.set(storedPassword);
-        localStorage.setItem('masterPassword_time', currentTime.toString());
-        timeoutId = setTimeout(() => {
-          masterPassword.set('');
-        }, EXPIRATION_TIME);
-        return true;
+        invoke('validate_master_password', {password: storedPassword}).then((res) => {
+          if (res) {
+            masterPassword.set(storedPassword);
+            timeoutId = setTimeout(() => {
+              masterPassword.set('');
+            }, EXPIRATION_TIME);
+            return true;
+          } else {
+            localStorage.removeItem('masterPassword');
+            localStorage.removeItem('masterPassword_time');
+            return false;
+          }
+        });
       } else {
         localStorage.removeItem('masterPassword');
         localStorage.removeItem('masterPassword_time');
@@ -43,7 +52,7 @@
     return false;
   }
 
-  // checkMasterPassword();
+  checkMasterPassword();
 </script>
 
 <main>
@@ -52,7 +61,7 @@
       Diese App funktioniert nur innerhalb von der Tauri-App! Bitte starte die App mit <code>npm run tauri dev</code>! hier werden nur dummy Daten angezeigt!
     </div>
   {/if}
-  <!-- {#if $masterPassword.length === 0 && isTauri}
+  {#if $masterPassword.length === 0 && isTauri}
   <div class="row">
     <h1>Masterpasswort</h1>
   </div>
@@ -64,7 +73,17 @@
           alert("Diese Funktion ist nur in der Desktop App verfügbar!");
           return;
         }
-        setMasterPassword(e.target[0].value);
+        if (e.target[0].value.length === 0) {
+          message("Bitte ein Passwort eingeben!");
+          return;
+        }
+        invoke('validate_master_password', {password: e.target[0].value}).then((res) => {
+          if (res) {
+            setMasterPassword(e.target[0].value);
+          } else {
+            message("Falsches Passwort!");
+          }
+        });
       }}>
       <input
         type="password"
@@ -72,12 +91,12 @@
       />
       <button type="submit">Bestätigen</button>
   </div>
-  {:else} -->
+  {:else}
   <Router>
     <Route path="/" component={Home} />
     <Route path="/addPw" component={AddPw} />
     <Route path="/viewPw" component={View} />
     <Route path="/editPw" component={EditPw} />
   </Router>
-  <!-- {/if} -->
+  {/if}
 </main>
