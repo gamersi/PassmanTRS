@@ -1,25 +1,39 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::io::prelude::*;
 use std::io::SeekFrom;
+use std::num::NonZeroU32;
 use std::{io::Write, path::Path};
 use tauri::Manager;
 use bcrypt::{hash, verify};
+use ring::pbkdf2;
+use aes_gcm::{
+    aead::Aead,
+    aead::{generic_array::GenericArray, OsRng},
+    AeadCore, Aes256Gcm, Key, KeyInit,
+};
 
-// Password struct
+const PBKDF2_ROUNDS: u32 = 100_000;
+const SALT_LEN: usize = 16;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct Block {
+    data: Vec<u8>,
+    nonce: Vec<u8>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Password {
     id: i32,
     name: String,
     username: String,
-    password: String,
+    password: Block,
     url: String,
     notes: String,
+    decrypted_password: Option<String>,
 }
 
 fn get_os() -> String {
@@ -42,7 +56,7 @@ fn get_passwords_file_path() -> String {
         path.push_str("/.config/passmantrs/passwords.json");
         path
     };
-    // check if folder exists and create if it doesn't
+    
     let mut folder_path = path.clone();
     for _ in "passwords.json".chars() {
         folder_path.pop();
@@ -68,7 +82,7 @@ fn get_master_password_file_path() -> String {
         path.push_str("/.config/passmantrs/master_password.txt");
         path
     };
-    // check if folder exists and create if it doesn't
+    
     let mut folder_path = path.clone();
     for _ in "master_password.txt".chars() {
         folder_path.pop();
@@ -79,9 +93,20 @@ fn get_master_password_file_path() -> String {
     path
 }
 
-// returns a list of passwords as a string array after being decrypted
+fn derive_key(password: &str, salt: &[u8]) -> [u8; 32] {
+    let mut key = [0u8; 32];
+    pbkdf2::derive(
+        pbkdf2::PBKDF2_HMAC_SHA256,
+        NonZeroU32::new(PBKDF2_ROUNDS).unwrap(),
+        salt,
+        password.as_bytes(),
+        &mut key,
+    );
+    key
+}
+
 #[tauri::command]
-fn get_passwords() -> Vec<Password> {
+fn get_passwords(master_password: String) -> Vec<Password> {
     let path = get_passwords_file_path();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
@@ -95,27 +120,32 @@ fn get_passwords() -> Vec<Password> {
         contents.push_str("[]");
         file.write_fmt(format_args!("{}", contents)).unwrap();
     }
-    // create contentsJson variable to store contents as json
-    let mut contents_json: serde_json::Value = serde_json::from_str(&contents).unwrap();
-    // decrypt passwords
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+    
+    let mut contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
+    
     let mut passwords: Vec<Password> = Vec::new();
-    for password in contents_json.as_array_mut().unwrap() {
-        let decrypted_password = decrypt(password["password"].to_string());
+    for password in contents_json.iter_mut() {
+        let encrypted_password = password.password.clone();
+        let decrypted_password = decrypt(encrypted_password.clone(), &key);
         passwords.push(Password {
-            id: password["id"].to_string().parse::<i32>().unwrap(),
-            name: password["name"].to_string(),
-            username: password["username"].to_string(),
-            password: decrypted_password,
-            url: password["url"].to_string(),
-            notes: password["notes"].to_string(),
+            id: password.id,
+            name: password.name.to_string(),
+            username: password.username.to_string(),
+            password: encrypted_password,
+            url: password.url.to_string(),
+            notes: password.notes.to_string(),
+            decrypted_password: Some(String::from_utf8(decrypted_password).unwrap()),
         });
     }
-    // return passwords
+    
     passwords
 }
 
 #[tauri::command]
-fn get_password(id: i32) -> Password {
+fn get_password(id: i32, master_password: String) -> Password {
     let path = get_passwords_file_path();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
@@ -129,21 +159,23 @@ fn get_password(id: i32) -> Password {
         contents.push_str("[]");
         file.write_fmt(format_args!("{}", contents)).unwrap();
     }
-    // create contentsJson variable to store contents as json
-    let contents_json: serde_json::Value = serde_json::from_str(&contents).unwrap();
-    // decrypt password
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+    
+    let contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
+
+    let encrypted_password = contents_json[id as usize].password.clone();
     let password: Password = Password {
-        id: contents_json[id as usize]["id"]
-            .to_string()
-            .parse::<i32>()
-            .unwrap(),
-        name: contents_json[id as usize]["name"].to_string(),
-        username: contents_json[id as usize]["username"].to_string(),
-        password: decrypt(contents_json[id as usize]["password"].to_string()),
-        url: contents_json[id as usize]["url"].to_string(),
-        notes: contents_json[id as usize]["notes"].to_string(),
+        id: contents_json[id as usize].id,
+        name: contents_json[id as usize].name.to_string(),
+        username: contents_json[id as usize].username.to_string(),
+        password: encrypted_password.clone(),
+        url: contents_json[id as usize].url.to_string(),
+        notes: contents_json[id as usize].notes.to_string(),
+        decrypted_password: Some(String::from_utf8(decrypt(encrypted_password, &key)).unwrap()),
     };
-    // return password
+
     password
 }
 
@@ -155,6 +187,7 @@ fn edit_password(
     password: String,
     url: String,
     notes: String,
+    master_password: String,
 ) {
     let path = get_passwords_file_path();
     let mut file = std::fs::OpenOptions::new()
@@ -169,23 +202,29 @@ fn edit_password(
         contents.push_str("[]");
         file.write_fmt(format_args!("{}", contents)).unwrap();
     }
-    // create contentsJson variable to store contents as json
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+
+    
     let mut contents_json: serde_json::Value = serde_json::from_str(&contents).unwrap();
-    // find password to edit by id
+    
     let mut password_to_edit = contents_json[id as usize].clone();
-    // edit password
+    let encrypted_password = encrypt(&password.trim().as_bytes().to_vec(), &key);
+    
     password_to_edit["name"] = serde_json::Value::from(name);
     password_to_edit["username"] = serde_json::Value::from(username);
-    password_to_edit["password"] = serde_json::Value::from(encrypt(password));
+    password_to_edit["password"]["data"] = serde_json::Value::from(encrypted_password.data);
+    password_to_edit["password"]["nonce"] = serde_json::Value::from(encrypted_password.nonce);
     password_to_edit["url"] = serde_json::Value::from(url);
     password_to_edit["notes"] = serde_json::Value::from(notes);
-    // replace password in contentsJson
+    
     contents_json[id as usize] = password_to_edit;
-    // convert contentsJson back to string
+    
     let contents_string = serde_json::to_string(&contents_json).unwrap();
-    // set cursor to 0
+    
     file.seek(SeekFrom::Start(0)).unwrap();
-    // write contents to file
+    
     file.write_all(contents_string.as_bytes()).unwrap();
     file.set_len(contents_string.len() as u64).unwrap();
 }
@@ -229,7 +268,7 @@ async fn open_view_password(app: tauri::AppHandle, id: i32) {
 }
 
 #[tauri::command]
-fn add_password(name: String, username: String, mut password: String, url: String, notes: String) {
+fn add_password(name: String, username: String, password: String, url: String, notes: String, master_password: String) {
     let path = get_passwords_file_path();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
@@ -244,22 +283,26 @@ fn add_password(name: String, username: String, mut password: String, url: Strin
     } else {
         serde_json::from_str(&contents).unwrap()
     };
-    // encrypt password
-    password = encrypt(password);
-    // add new password to the vector
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+    
+    let password_block = encrypt(&password.trim().as_bytes().to_vec(), &key);
+    
     passwords.push(Password {
         id: passwords.len() as i32,
         name,
         username,
-        password,
+        password: password_block,
         url,
         notes,
+        decrypted_password: None,
     });
-    // serialize the vector to json and write it back to the file
+    
     let contents_string = serde_json::to_string(&passwords).unwrap();
-    // set cursor to 0
+    
     file.seek(SeekFrom::Start(0)).unwrap();
-    // write contents to file
+    
     file.write_all(contents_string.as_bytes()).unwrap();
     file.set_len(contents_string.len() as u64).unwrap();
 }
@@ -280,17 +323,17 @@ fn delete_password(id: i32) {
     } else {
         serde_json::from_str(&contents).unwrap()
     };
-    // remove password from vector
+    
     passwords.remove(id as usize);
-    //reset ids
+    
     for (i, password) in passwords.iter_mut().enumerate() {
         password.id = i as i32;
     }
-    // serialize the vector to json and write it back to the file
+    
     let contents_string = serde_json::to_string(&passwords).unwrap();
-    // set cursor to 0
+    
     file.seek(SeekFrom::Start(0)).unwrap();
-    // write contents to file
+    
     file.write_all(contents_string.as_bytes()).unwrap();
     file.set_len(contents_string.len() as u64).unwrap();
 }
@@ -310,7 +353,6 @@ fn close_edit_password(app: tauri::AppHandle) {
 #[tauri::command]
 fn close_view_password(app: tauri::AppHandle) {
     app.get_window("viewpw").unwrap().close().unwrap();
-    // app.emit_all("refresh_passwords", ()).unwrap();
 }
 
 #[tauri::command]
@@ -324,9 +366,9 @@ fn delete_passwords() {
         .unwrap();
     let passwords: Vec<Password> = vec![];
     let contents_string = serde_json::to_string(&passwords).unwrap();
-    // set cursor to 0
+    
     file.seek(SeekFrom::Start(0)).unwrap();
-    // write contents to file
+    
     file.write_all(contents_string.as_bytes()).unwrap();
     file.set_len(contents_string.len() as u64).unwrap();
 }
@@ -356,12 +398,39 @@ fn validate_master_password(password: String) -> bool {
     }
 }
 
-fn encrypt(password: String) -> String {
-    password
+fn encrypt(data: &[u8], key_byte: &[u8]) -> Block {
+    let key: &Key<Aes256Gcm> = key_byte.into();
+    let cipher = Aes256Gcm::new(&key);
+
+    let nonce = Aes256Gcm::generate_nonce(OsRng);
+
+    let encrypted_data = match cipher.encrypt(&nonce, data) {
+        Ok(encrpted) => {
+            let e = Block {
+                data: encrpted,
+                nonce: nonce.to_vec(),
+            };
+
+            e
+        }
+        Err(err) => {
+            panic!("Could not encrypt data: {:?}", err);
+        }
+    };
+    encrypted_data
 }
 
-fn decrypt(password: String) -> String {
-    password
+
+fn decrypt(encrypted_data: Block, password_byte: &[u8]) -> Vec<u8> {
+    let key: &Key<Aes256Gcm> = password_byte.into();
+    let nonce = encrypted_data.nonce;
+    let data = encrypted_data.data;
+
+    let cipher = Aes256Gcm::new(&key);
+    let op = cipher
+        .decrypt(GenericArray::from_slice(&nonce), data.as_slice())
+        .expect("decryption failure!");
+    op
 }
 
 fn main() {

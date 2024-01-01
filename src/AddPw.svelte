@@ -5,6 +5,8 @@
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
+    const masterPassword = localStorage.getItem('masterPassword')
+    
     function addPassword(event) {
         if (!isTauri) {
             alert('Dieser Button funktioniert nur in der Tauri App')
@@ -15,7 +17,8 @@
             username: event.target.username.value,
             password: event.target.password.value,
             url: parseURL(event.target.url.value),
-            notes: event.target.notes.value
+            notes: event.target.notes.value,
+            masterPassword
         }).then((res) => {
             console.log(res)
             invoke('close_add_password')

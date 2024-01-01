@@ -10,3 +10,8 @@ export function parseURL(url: string) {
 export function getDomain(url: string) {
     return new URL(url).hostname
 }
+
+export function updateTheme(theme: string) {
+    localStorage.setItem("theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+}

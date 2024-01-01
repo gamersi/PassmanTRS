@@ -5,16 +5,21 @@
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
-    // get password id from url params
+    const masterPassword = localStorage.getItem('masterPassword')
+
     const passwordId = new URLSearchParams(window.location.search).get('id')
 
     let password: Password = {
         id: 0,
         name: 'Loading...',
         username: 'Loading...',
-        password: 'Loading...',
+        password: {
+            nonce: 'Loading...',
+            data: 'Loading...'
+        },
         url: 'Loading...',
-        notes: 'Loading...'
+        notes: 'Loading...',
+        decrypted_password: 'Loading...'
     }
 
     if (!isTauri) {
@@ -22,24 +27,28 @@
             id: 0,
             name: 'Test',
             username: 'Test',
-            password: 'Test',
+            password: {
+                nonce: 'Test',
+                data: 'Test'
+            },
             url: 'Test',
-            notes: 'Test'
+            notes: 'Test',
+            decrypted_password: 'Test'
         }
     } else {
-        invoke('get_password', {id: parseInt(passwordId)}).then((res: Password) => {
+        invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: Password) => {
             res.name = res.name.replace(/^"(.*)"$/, '$1');
             res.username = res.username.replace(/^"(.*)"$/, '$1');
-            res.password = res.password.replace(/^"(.*)"$/, '$1');
+            res.decrypted_password = res.decrypted_password.replace(/^"(.*)"$/, '$1');
             res.url = res.url.replace(/^"(.*)"$/, '$1');
             res.notes = res.notes.replace(/^"(.*)"$/, '$1');
             // replace empty strings with n/a
-            res.name = res.name === '' ? 'n/a' : res.name
-            res.username = res.username === '' ? 'n/a' : res.username
-            res.password = res.password === '' ? 'n/a' : res.password
-            res.url = res.url === '' ? 'n/a' : res.url
-            res.notes = res.notes === '' ? 'n/a' : res.notes
-            password = res
+            res.name = res.name === '' ? 'n/a' : res.name;
+            res.username = res.username === '' ? 'n/a' : res.username;
+            res.decrypted_password = res.decrypted_password === '' ? 'n/a' : res.decrypted_password;
+            res.url = res.url === '' ? 'n/a' : res.url;
+            res.notes = res.notes === '' ? 'n/a' : res.notes;
+            password = res;
         })
     }
 
@@ -64,7 +73,7 @@
     </div>
     <div class="mb-3">
         <label for="password" class="form-label">Passwort</label>
-        <input type="text" class="form-control" id="password" placeholder="Passwort" value="{password.password}" readonly>
+        <input type="text" class="form-control" id="password" placeholder="Passwort" value="{password.decrypted_password}" readonly>
     </div>
     <div class="mb-3">
         <label for="url" class="form-label">URL</label>

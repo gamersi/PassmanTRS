@@ -6,7 +6,8 @@
 	import AddPw from './AddPw.svelte';
 	import View from './View.svelte';
 	import EditPw from './EditPw.svelte';
-	import { masterPassword } from './utils/stores';
+	import { masterPassword, theme } from './utils/stores';
+	import { updateTheme } from './utils/utillities';
 
   // @ts-ignore
   const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -53,12 +54,28 @@
   }
 
   checkMasterPassword();
+
+  function detectColorScheme() {
+    const themeStorage = localStorage.getItem('theme');
+    if (themeStorage) {
+      theme.set(themeStorage);
+      updateTheme(themeStorage);
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      theme.set('dark');
+      updateTheme('dark');
+    } else {
+      theme.set('light');
+      updateTheme('light');
+    }
+  }
+
+  detectColorScheme();
 </script>
 
 <main>
   {#if !isTauri}
     <div class="alert alert-warning" role="alert">
-      Diese App funktioniert nur innerhalb von der Tauri-App! Bitte starte die App mit <code>npm run tauri dev</code>! hier werden nur dummy Daten angezeigt!
+      Diese App funktioniert nur innerhalb von der Tauri-App! Bitte starte die App mit <code>npm run tauri dev</code>! Hier werden nur Dummy-Daten angezeigt!
     </div>
   {/if}
   {#if $masterPassword.length === 0 && isTauri}
@@ -77,10 +94,21 @@
           message("Bitte ein Passwort eingeben!");
           return;
         }
-        invoke('validate_master_password', {password: e.target[0].value}).then((res) => {
+        const password = e.target[0].value;
+        e.target[0].disabled = true;
+        e.target[0].placeholder = "Login wird verifiziert...";
+        e.target[0].value = "";
+        e.target[1].disabled = true;
+        console.log(e.target[0])
+        console.log(e.target[1])
+        invoke('validate_master_password', {password}).then((res) => {
+          e.target[0].disabled = false;
+          e.target[1].disabled = false;
           if (res) {
-            setMasterPassword(e.target[0].value);
+            setMasterPassword(password);
           } else {
+            e.target[0].placeholder = "Masterpasswort";
+            e.target[0].value = password;
             message("Falsches Passwort!");
           }
         });

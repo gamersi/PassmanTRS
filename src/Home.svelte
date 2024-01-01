@@ -7,8 +7,13 @@
 	import FaEye from "svelte-icons/fa/FaEye.svelte";
 	import FaPen from "svelte-icons/fa/FaPen.svelte";
 	import FaTrash from "svelte-icons/fa/FaTrash.svelte";
-	import FaLink from 'svelte-icons/fa/FaLink.svelte'
-	import { passwords, masterPassword } from "./utils/stores";
+	import FaLink from 'svelte-icons/fa/FaLink.svelte';
+	import FaLock from 'svelte-icons/fa/FaLock.svelte';
+	import FaCopy from 'svelte-icons/fa/FaCopy.svelte';
+	import FaMoon from 'svelte-icons/fa/FaMoon.svelte';
+	import FaSun from 'svelte-icons/fa/FaSun.svelte';
+	import { passwords, masterPassword, theme } from "./utils/stores";
+	import { updateTheme } from "./utils/utillities";
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -18,11 +23,13 @@
 	});
 
 	function getPasswords() {
-		invoke("get_passwords").then((res: Password[]) => {
+		let currentMasterPassword = localStorage.getItem("masterPassword");
+
+		invoke("get_passwords", { masterPassword: currentMasterPassword }).then((res: Password[]) => {
 			res.forEach((password) => {
 				password.name = password.name.replace(/^"(.*)"$/, "$1");
 				password.username = password.username.replace(/^"(.*)"$/, "$1");
-				password.password = password.password.replace(/^"(.*)"$/, "$1");
+				password.decrypted_password = password.decrypted_password.replace(/^"(.*)"$/, "$1");
 				password.url = password.url.replace(/^"(.*)"$/, "$1");
 				password.notes = password.notes.replace(/^"(.*)"$/, "$1");
 			});
@@ -36,13 +43,18 @@
                 id: 0,
                 name: 'Test',
                 username: 'Test',
-                password: 'Test',
+                password: {
+					nonce: 'Test',
+					data: 'Test'
+				},
                 url: 'Test',
-                notes: 'Test'
+                notes: 'Test',
+				decrypted_password: 'Test'
             }
         ])
     } else {
-        const unlisten = listen<string>("refresh_passwords", (event) => {
+		console.log("getting passwords");
+        listen<string>("refresh_passwords", (event) => {
             console.log("refresh_passwords event received:", event.payload);
             getPasswords();
         });
@@ -51,6 +63,7 @@
     }
 
 	function openAddPassword() {
+		console.log("opening add password");
         if (!isTauri) {
             window.location.href = "/addPw";
             return;
@@ -61,12 +74,34 @@
 	function openURL(url: string) {
 		open(url);
 	}
+
+	function logOut() {
+		masterPassword.set("");
+		localStorage.removeItem("masterPassword");
+		localStorage.removeItem("masterPassword_time");
+		console.clear();
+		console.log("logged out");
+	}
 </script>
 
 <main class="container">
 	<div class="row">
 		<h1>Passwörter</h1>
 		<div class="btn-group">
+			<button class="btn btn-icon btn-primary" on:click={() => {
+				theme.set($theme === "light" ? "dark" : "light");
+				localStorage.setItem("theme", $theme);
+				updateTheme($theme);
+			}}>
+				{#if $theme === "light"}
+					<FaMoon />
+				{:else}
+					<FaSun />
+				{/if}
+			</button>
+			<button class="btn btn-icon btn-primary" on:click={logOut}>
+				<FaLock />
+			</button>
 			<button class="btn btn-icon btn-primary" on:click={openAddPassword}>
 				<FaPlus />
 			</button>
@@ -96,6 +131,22 @@
 						<FaLink />
 					</button>
 					{/if}
+					<button
+						class="btn btn-icon btn-primary"
+						on:click={() => {
+							if (!isTauri) {
+								alert("Diese Funktion ist nur in der Desktop App verfügbar!");
+								return;
+							}
+							window.navigator.clipboard.writeText(password.decrypted_password);
+							Notification.requestPermission().then((permission) => {
+								if (permission === "granted") {
+									new Notification("Passwort kopiert!");
+								}
+							});
+						}}>
+						<FaCopy />
+					</button>
 					<button
 						class="btn btn-icon btn-primary"
 						on:click={() => {

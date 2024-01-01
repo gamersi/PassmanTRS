@@ -6,10 +6,11 @@
 - [x] password deletion
 - [x] password editing
 - [x] master password encrypted in bcrypt
+- [x] password encrypted in AES-256-GCM (WIP)
+- [x] password encrypted with master password (WIP)
+- [x] copy to clipboard
 
 ## Upcoming Features
-- [ ] password encrypted in AES-256-GCM (WIP)
-- [ ] password encrypted with master password (WIP)
 - [ ] password generation
 - [ ] password strength meter
 - [ ] password sharing
@@ -17,7 +18,6 @@
 - [ ] password history
 - [ ] password import/export
 - [ ] easy vault backup
-- [ ] copy to clipboard
 - [ ] search
 - [ ] settings
 
