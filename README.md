@@ -6,10 +6,10 @@
 - [x] password deletion
 - [x] password editing
 - [x] master password encrypted in bcrypt
-- [x] password encrypted in AES-256-GCM
-- [x] password encrypted with master password
 
 ## Upcoming Features
+- [ ] password encrypted in AES-256-GCM (WIP)
+- [ ] password encrypted with master password (WIP)
 - [ ] password generation
 - [ ] password strength meter
 - [ ] password sharing
