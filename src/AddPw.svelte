@@ -1,9 +1,12 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri'
+	import { parseURL } from './utils/utillities';
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
+    const masterPassword = localStorage.getItem('masterPassword')
+    
     function addPassword(event) {
         if (!isTauri) {
             alert('Dieser Button funktioniert nur in der Tauri App')
@@ -13,8 +16,9 @@
             name: event.target.name.value,
             username: event.target.username.value,
             password: event.target.password.value,
-            url: event.target.url.value,
-            notes: event.target.notes.value
+            url: parseURL(event.target.url.value),
+            notes: event.target.notes.value,
+            masterPassword
         }).then((res) => {
             console.log(res)
             invoke('close_add_password')

@@ -8,11 +8,14 @@
   },
   "package": {
     "productName": "PassmanTRS",
-    "version": "0.0.0"
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
       "all": false,
+      "dialog": {
+        "all": true
+      },
       "shell": {
         "all": false,
         "open": true
