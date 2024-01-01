@@ -6,8 +6,7 @@
 - [x] password deletion
 - [x] password editing
 - [x] master password encrypted in bcrypt
-- [x] password encrypted in AES-256-GCM (WIP)
-- [x] password encrypted with master password (WIP)
+- [x] password encrypted in AES-256-GCM
 - [x] copy to clipboard
 
 ## Upcoming Features
@@ -20,6 +19,12 @@
 - [ ] easy vault backup
 - [ ] search
 - [ ] settings
+
+## News
+- ⌈ 01.01.2024: [v0.1.0 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.0)
+- | December 2023: Development resumed
+- | June 2023: Development paused
+- ⌊ May 2023: Development started
 
 ## Installation
 ### Windows
