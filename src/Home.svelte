@@ -221,6 +221,11 @@
 		padding: 10px;
 		margin: 10px;
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+		transition: all 0.25s;
+	}
+
+	.card:hover {
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
 	}
 
 	.title {
@@ -231,6 +236,14 @@
 	.username {
 		color: #888888;
 		font-size: 15px;
+	}
+
+	.title, .username {
+		min-width: 100px;
+		max-width: 200px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.btn-group {

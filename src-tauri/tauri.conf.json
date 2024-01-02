@@ -45,7 +45,9 @@
         "resizable": true,
         "title": "passwordmanager",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "minWidth": 550,
+        "minHeight": 400
       }
     ]
   }

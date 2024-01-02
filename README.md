@@ -8,6 +8,7 @@
 - [x] master password encrypted in bcrypt
 - [x] password encrypted in AES-256-GCM
 - [x] copy to clipboard
+- [x] Dark & Light theme
 
 ## Upcoming Features
 - [ ] password generation
@@ -19,6 +20,7 @@
 - [ ] easy vault backup
 - [ ] search
 - [ ] settings
+- [ ] master password change
 
 ## News
 - ⌈ 01.01.2024: [v0.1.0 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.0)
