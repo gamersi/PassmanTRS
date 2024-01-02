@@ -1,5 +1,6 @@
-import { writable } from "svelte/store";
+import { writable, type Writable } from "svelte/store";
+import type { Password } from "./types";
 
 export const masterPassword = writable("");
-export const passwords = writable([]);
+export const passwords: Writable<Password[]> = writable([]);
 export const theme = writable("light");

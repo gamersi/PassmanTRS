@@ -1,4 +1,5 @@
 <script lang="ts">
+  // @ts-nocheck	workaround for TS complaining about the event targets
   import {Router, Route, Link} from 'svelte-navigator'
   import { invoke } from '@tauri-apps/api/tauri';
   import { message } from '@tauri-apps/api/dialog';
@@ -14,9 +15,9 @@
 
   const EXPIRATION_TIME = 10 * 60 * 1000; // 10 minutes in milliseconds
 
-  let timeoutId;
+  let timeoutId: NodeJS.Timeout;
 
-  function setMasterPassword(password) {
+  function setMasterPassword(password: string) {
     masterPassword.set(password);
     clearTimeout(timeoutId);
     localStorage.setItem("masterPassword", password);
@@ -29,7 +30,7 @@
   function checkMasterPassword() {
     const storedPassword = localStorage.getItem('masterPassword');
     if (storedPassword) {
-      const storedTime = localStorage.getItem('masterPassword_time');
+      const storedTime = localStorage.getItem('masterPassword_time') || '0';
       const currentTime = new Date().getTime();
       if (currentTime - parseInt(storedTime) <= EXPIRATION_TIME) {
         invoke('validate_master_password', {password: storedPassword}).then((res) => {
@@ -90,6 +91,11 @@
           alert("Diese Funktion ist nur in der Desktop App verfügbar!");
           return;
         }
+        if (e.target === null || e.target[0] === null || e.target[1] === null) {
+          message("Bitte ein Passwort eingeben!");
+          return;
+        }
+
         if (e.target[0].value.length === 0) {
           message("Bitte ein Passwort eingeben!");
           return;

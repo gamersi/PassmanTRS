@@ -1,8 +1,9 @@
 <script lang="ts">
+	// @ts-nocheck	workaround for TS complaining about the icon imports
 	import {invoke} from "@tauri-apps/api/tauri";
 	import {listen} from "@tauri-apps/api/event";
 	import { open } from '@tauri-apps/api/shell';
-	import type {Password} from "./utils/types";
+	import type { Password } from "./utils/types";
 	import FaPlus from "svelte-icons/fa/FaPlus.svelte";
 	import FaEye from "svelte-icons/fa/FaEye.svelte";
 	import FaPen from "svelte-icons/fa/FaPen.svelte";
@@ -25,15 +26,16 @@
 	function getPasswords() {
 		let currentMasterPassword = localStorage.getItem("masterPassword");
 
-		invoke("get_passwords", { masterPassword: currentMasterPassword }).then((res: Password[]) => {
-			res.forEach((password) => {
+		invoke("get_passwords", { masterPassword: currentMasterPassword }).then((res) => {
+			let passwords_res = res as Password[];
+			passwords_res.forEach((password) => {
 				password.name = password.name.replace(/^"(.*)"$/, "$1");
 				password.username = password.username.replace(/^"(.*)"$/, "$1");
-				password.decrypted_password = password.decrypted_password.replace(/^"(.*)"$/, "$1");
+				password.decrypted_password = password.decrypted_password ? password.decrypted_password.replace(/^"(.*)"$/, "$1") : 'Kein Passwort';
 				password.url = password.url.replace(/^"(.*)"$/, "$1");
 				password.notes = password.notes.replace(/^"(.*)"$/, "$1");
 			});
-			passwords.set(res);
+			passwords.set(passwords_res);
 		});
 	}
 
@@ -138,12 +140,15 @@
 								alert("Diese Funktion ist nur in der Desktop App verfügbar!");
 								return;
 							}
+							if (!window.navigator.clipboard) {
+								alert("Kopieren wird auf dein nicht!");
+								return;
+							}
+							if (!password.decrypted_password) {
+								alert("Das Passwort ist nicht entschlüsselt!");
+								return;
+							}
 							window.navigator.clipboard.writeText(password.decrypted_password);
-							Notification.requestPermission().then((permission) => {
-								if (permission === "granted") {
-									new Notification("Passwort kopiert!");
-								}
-							});
 						}}>
 						<FaCopy />
 					</button>

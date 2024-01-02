@@ -7,7 +7,7 @@
 
     const masterPassword = localStorage.getItem('masterPassword')
     
-    function addPassword(event) {
+    function addPassword(event: any) {
         if (!isTauri) {
             alert('Dieser Button funktioniert nur in der Tauri App')
             return
