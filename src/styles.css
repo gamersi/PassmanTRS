@@ -8,6 +8,9 @@
   --background-color: #f6f6f6;
   --hover-color: #535bf2;
   --button-active-background-color: #e8e8e8;
+  --btn-color: #fff;
+  --btn-hover-color: #e4e4e4;
+  --btn-active-color: #cacaca;
 
   color: var(--color);
   background-color: var(--background-color);
@@ -24,6 +27,9 @@
   --background-color: #2f2f2f;
   --hover-color: #24c8db;
   --button-active-background-color: #0f0f0f69;
+  --btn-color: #2b2b2b;
+  --btn-hover-color: #3a3a3a;
+  --btn-active-color: #4a4a4a;
 }
 
 a {
@@ -37,8 +43,7 @@ a:hover {
   color: var(--hover-color);
 }
 
-input,
-button {
+input {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 10px;
@@ -46,7 +51,7 @@ button {
   font-weight: 500;
   font-family: inherit;
   color: var(--color);
-  background-color: var(--background-color);
+  background-color: var(--btn-color);
   transition: all 0.25s;
   box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
   cursor: pointer;
@@ -56,18 +61,68 @@ input {
   cursor: text;
 }
 
-button:hover {
-  border-color: var(--hover-color);
-}
-
-button:active {
-  border-color: var(--hover-color);
-  background-color: var(--button-active-background-color);
-}
 
 input,
 button {
   outline: none;
+}
+
+.btn {
+  cursor: pointer;
+  margin: 0 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  margin: 0 10px;
+  padding: 10px;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color);
+  background-color: var(--btn-color);
+  transition: all 0.25s;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  width: auto;
+}
+
+.btn:hover {
+  border-color: none;
+  background-color: var(--btn-hover-color);
+}
+
+.btn:active {
+  border-color: none;
+  background-color: var(--btn-active-color);
+}
+
+.btn-icon {
+  width: 40px;
+  height: 45px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0069d9;
+}
+
+.btn-primary:active {
+  background-color: #0062cc;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-danger:active {
+  background-color: #bd2130;
 }
 
 .alert {
@@ -94,4 +149,9 @@ button {
 .alert-success {
   border-color: #7ed321;
   background-color: #e8f5e9;
+}
+
+.modal-content {
+  background-color: var(--background-color);
+  color: var(--color);
 }

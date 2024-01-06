@@ -1,8 +1,9 @@
 <script lang="ts">
+	// @ts-nocheck	workaround for TS complaining about the icon imports
 	import {invoke} from "@tauri-apps/api/tauri";
 	import {listen} from "@tauri-apps/api/event";
 	import { open } from '@tauri-apps/api/shell';
-	import type {Password} from "./utils/types";
+	import type { Password } from "./utils/types";
 	import FaPlus from "svelte-icons/fa/FaPlus.svelte";
 	import FaEye from "svelte-icons/fa/FaEye.svelte";
 	import FaPen from "svelte-icons/fa/FaPen.svelte";
@@ -10,10 +11,10 @@
 	import FaLink from 'svelte-icons/fa/FaLink.svelte';
 	import FaLock from 'svelte-icons/fa/FaLock.svelte';
 	import FaCopy from 'svelte-icons/fa/FaCopy.svelte';
-	import FaMoon from 'svelte-icons/fa/FaMoon.svelte';
-	import FaSun from 'svelte-icons/fa/FaSun.svelte';
-	import { passwords, masterPassword, theme } from "./utils/stores";
-	import { updateTheme } from "./utils/utillities";
+	import FaCog from 'svelte-icons/fa/FaCog.svelte'
+	
+	import { passwords, masterPassword, isSettingsOpen } from "./utils/stores";
+	
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -25,15 +26,16 @@
 	function getPasswords() {
 		let currentMasterPassword = localStorage.getItem("masterPassword");
 
-		invoke("get_passwords", { masterPassword: currentMasterPassword }).then((res: Password[]) => {
-			res.forEach((password) => {
+		invoke("get_passwords", { masterPassword: currentMasterPassword }).then((res) => {
+			let passwords_res = res as Password[];
+			passwords_res.forEach((password) => {
 				password.name = password.name.replace(/^"(.*)"$/, "$1");
 				password.username = password.username.replace(/^"(.*)"$/, "$1");
-				password.decrypted_password = password.decrypted_password.replace(/^"(.*)"$/, "$1");
+				password.decrypted_password = password.decrypted_password ? password.decrypted_password.replace(/^"(.*)"$/, "$1") : 'Kein Passwort';
 				password.url = password.url.replace(/^"(.*)"$/, "$1");
 				password.notes = password.notes.replace(/^"(.*)"$/, "$1");
 			});
-			passwords.set(res);
+			passwords.set(passwords_res);
 		});
 	}
 
@@ -89,15 +91,9 @@
 		<h1>Passwörter</h1>
 		<div class="btn-group">
 			<button class="btn btn-icon btn-primary" on:click={() => {
-				theme.set($theme === "light" ? "dark" : "light");
-				localStorage.setItem("theme", $theme);
-				updateTheme($theme);
+				isSettingsOpen.set(true);
 			}}>
-				{#if $theme === "light"}
-					<FaMoon />
-				{:else}
-					<FaSun />
-				{/if}
+				<FaCog />
 			</button>
 			<button class="btn btn-icon btn-primary" on:click={logOut}>
 				<FaLock />
@@ -138,12 +134,15 @@
 								alert("Diese Funktion ist nur in der Desktop App verfügbar!");
 								return;
 							}
+							if (!window.navigator.clipboard) {
+								alert("Kopieren wird auf dein nicht!");
+								return;
+							}
+							if (!password.decrypted_password) {
+								alert("Das Passwort ist nicht entschlüsselt!");
+								return;
+							}
 							window.navigator.clipboard.writeText(password.decrypted_password);
-							Notification.requestPermission().then((permission) => {
-								if (permission === "granted") {
-									new Notification("Passwort kopiert!");
-								}
-							});
 						}}>
 						<FaCopy />
 					</button>
@@ -201,9 +200,6 @@
 		display: flex;
 		align-items: center;
 	}
-	.btn {
-		margin: 0 10px;
-	}
 
 	.card {
 		display: flex;
@@ -216,6 +212,11 @@
 		padding: 10px;
 		margin: 10px;
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+		transition: all 0.25s;
+	}
+
+	.card:hover {
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
 	}
 
 	.title {
@@ -228,6 +229,14 @@
 		font-size: 15px;
 	}
 
+	.title, .username {
+		min-width: 100px;
+		max-width: 200px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
 	.btn-group {
 		display: flex;
 		align-items: center;
@@ -238,50 +247,5 @@
 		justify-content: flex-end;
 		align-items: center;
 		width: 100%;
-	}
-
-	.btn {
-		border-radius: 8px;
-		border: 1px solid transparent;
-		margin: 0 10px;
-		padding: 10px;
-		font-size: 1em;
-		font-weight: 500;
-		font-family: inherit;
-		color: #0f0f0f;
-		background-color: #ffffff;
-		transition: all 0.25s;
-		box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-		width: auto;
-	}
-
-	.btn-icon {
-		width: 40px;
-	}
-
-	.btn-primary {
-		background-color: #007bff;
-		color: white;
-	}
-
-	.btn-primary:hover {
-		background-color: #0069d9;
-	}
-
-	.btn-primary:active {
-		background-color: #0062cc;
-	}
-
-	.btn-danger {
-		background-color: #dc3545;
-		color: white;
-	}
-
-	.btn-danger:hover {
-		background-color: #c82333;
-	}
-
-	.btn-danger:active {
-		background-color: #bd2130;
 	}
 </style>

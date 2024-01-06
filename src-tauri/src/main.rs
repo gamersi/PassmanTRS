@@ -433,6 +433,79 @@ fn decrypt(encrypted_data: Block, password_byte: &[u8]) -> Vec<u8> {
     op
 }
 
+#[tauri::command]
+fn change_master_password(old_pw: String, new_pw: String) -> bool {
+    let mpw_path = get_master_password_file_path();
+    let mut mpw_file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(mpw_path.clone())
+        .unwrap();
+    let mut mpw_contents = String::new();
+    std::io::Read::read_to_string(&mut mpw_file, &mut mpw_contents).unwrap();
+    if mpw_contents.len() == 0 {
+        return false;
+    } else {
+        if !verify(old_pw.as_bytes(), &mpw_contents).unwrap() {
+            return false;
+        }
+    }
+
+    let hashed_password = hash(new_pw.as_bytes(), 12).unwrap();
+    mpw_file.seek(SeekFrom::Start(0)).unwrap();
+    mpw_file.write_all(hashed_password.as_bytes()).unwrap();
+    mpw_file.set_len(hashed_password.len() as u64).unwrap();
+
+    migrate_passwords(old_pw, new_pw)
+}
+
+fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path.clone())
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.len() == 0 {
+        contents.push_str("[]");
+        file.write_fmt(format_args!("{}", contents)).unwrap();
+    }
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let old_key = derive_key(&old_master_pw, &salt);
+    let new_key = derive_key(&new_master_pw, &salt);
+    
+    let mut contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
+    
+    let mut passwords: Vec<Password> = Vec::new();
+    for password in contents_json.iter_mut() {
+        let encrypted_password = password.password.clone();
+        let decrypted_password = decrypt(encrypted_password.clone(), &old_key);
+        let encrypted_password = encrypt(&decrypted_password, &new_key);
+        passwords.push(Password {
+            id: password.id,
+            name: password.name.to_string(),
+            username: password.username.to_string(),
+            password: encrypted_password,
+            url: password.url.to_string(),
+            notes: password.notes.to_string(),
+            decrypted_password: None,
+        });
+    }
+    
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+    
+    file.seek(SeekFrom::Start(0)).unwrap();
+    
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+    true
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -447,7 +520,8 @@ fn main() {
             close_add_password,
             close_edit_password,
             close_view_password,
-            validate_master_password
+            validate_master_password,
+            change_master_password,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

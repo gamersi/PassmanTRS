@@ -9,6 +9,7 @@
     const masterPassword = localStorage.getItem('masterPassword')
 
     const passwordId = new URLSearchParams(window.location.search).get('id')
+
     let password: Password = {
         id: 0,
         name: 'Loading...',
@@ -36,19 +37,28 @@
             decrypted_password: 'Test'
         }
     } else {
-        invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: Password) => {
-            res.name = res.name.replace(/^"(.*)"$/, '$1');
-            res.username = res.username.replace(/^"(.*)"$/, '$1');
-            res.decrypted_password = res.decrypted_password.replace(/^"(.*)"$/, '$1');
-            res.url = res.url.replace(/^"(.*)"$/, '$1');
-            res.notes = res.notes.replace(/^"(.*)"$/, '$1');
-            password = res
-        })
+        if (passwordId != null) {
+            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res) => {
+                let password_res = res as Password;
+                password_res.name = password_res.name.replace(/^"(.*)"$/, '$1');
+                password_res.username = password_res.username.replace(/^"(.*)"$/, '$1');
+                password_res.decrypted_password = password_res.decrypted_password ? password_res.decrypted_password.replace(/^"(.*)"$/, '$1') : 'Kein Passwort';
+                password_res.url = password_res.url.replace(/^"(.*)"$/, '$1');
+                password_res.notes = password_res.notes.replace(/^"(.*)"$/, '$1');
+                password = password_res
+            })
+        } else {
+            alert('Keine ID vorhanden')
+        }
     }
 
-    function editPassword(event) {
+    function editPassword(event: any) {
         if (!isTauri) {
             alert('Dieser Button funktioniert nur in der Tauri App')
+            return
+        }
+        if (passwordId == null) {
+            alert('Keine ID vorhanden')
             return
         }
         invoke('edit_password', {
@@ -62,7 +72,6 @@
         }).then((res) => {
             console.log(res)
 
-            // close window
             invoke('close_edit_password')
         })
     }

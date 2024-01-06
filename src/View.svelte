@@ -36,20 +36,25 @@
             decrypted_password: 'Test'
         }
     } else {
-        invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: Password) => {
-            res.name = res.name.replace(/^"(.*)"$/, '$1');
-            res.username = res.username.replace(/^"(.*)"$/, '$1');
-            res.decrypted_password = res.decrypted_password.replace(/^"(.*)"$/, '$1');
-            res.url = res.url.replace(/^"(.*)"$/, '$1');
-            res.notes = res.notes.replace(/^"(.*)"$/, '$1');
-            // replace empty strings with n/a
-            res.name = res.name === '' ? 'n/a' : res.name;
-            res.username = res.username === '' ? 'n/a' : res.username;
-            res.decrypted_password = res.decrypted_password === '' ? 'n/a' : res.decrypted_password;
-            res.url = res.url === '' ? 'n/a' : res.url;
-            res.notes = res.notes === '' ? 'n/a' : res.notes;
-            password = res;
-        })
+        if (passwordId == null) {
+            alert('Keine ID vorhanden')
+        } else {
+            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res) => {
+                let password_res = res as Password;
+                password_res.name = password_res.name.replace(/^"(.*)"$/, '$1');
+                password_res.username = password_res.username.replace(/^"(.*)"$/, '$1');
+                password_res.decrypted_password = password_res.decrypted_password ? password_res.decrypted_password.replace(/^"(.*)"$/, '$1') : 'Kein Passwort';
+                password_res.url = password_res.url.replace(/^"(.*)"$/, '$1');
+                password_res.notes = password_res.notes.replace(/^"(.*)"$/, '$1');
+                // replace empty strings with n/a
+                password_res.name = password_res.name === '' ? 'n/a' : password_res.name;
+                password_res.username = password_res.username === '' ? 'n/a' : password_res.username;
+                password_res.decrypted_password = password_res.decrypted_password === '' ? 'n/a' : password_res.decrypted_password;
+                password_res.url = password_res.url === '' ? 'n/a' : password_res.url;
+                password_res.notes = password_res.notes === '' ? 'n/a' : password_res.notes;
+                password = password_res;
+            })
+        }
     }
 
     function closeWindow() {

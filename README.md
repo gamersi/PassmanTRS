@@ -6,11 +6,14 @@
 - [x] password deletion
 - [x] password editing
 - [x] master password encrypted in bcrypt
-- [x] password encrypted in AES-256-GCM (WIP)
-- [x] password encrypted with master password (WIP)
+- [x] password encrypted in AES-256-GCM
 - [x] copy to clipboard
+- [x] Dark & Light theme
+- [x] settings
+- [x] master password change
 
 ## Upcoming Features
+- [ ] english translation (currently only german)
 - [ ] password generation
 - [ ] password strength meter
 - [ ] password sharing
@@ -19,7 +22,13 @@
 - [ ] password import/export
 - [ ] easy vault backup
 - [ ] search
-- [ ] settings
+
+## News
+- ⌈ 07.01.2024: [v0.1.1 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.1)
+- | 01.01.2024: [v0.1.0 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.0)
+- | December 2023: Development resumed
+- | June 2023: Development paused
+- ⌊ May 2023: Development started
 
 ## Installation
 ### Windows
@@ -30,6 +39,9 @@
 ### Linux
 1. Download the latest release from the [releases page](https://github.com/gamersi/PassmanTRS/releases).
 2. Either run the .AppImage file or install the .deb file. You may need to make the .AppImage file executable by running `chmod +x [file].AppImage`.
+
+### Arch Linux
+1. You can install the application from the [AUR](https://aur.archlinux.org/packages/passmantrs-bin/) by running `yay -S passmantrs-bin`.
 
 ### Mac (Intel only for now)
 1. Download the latest release from the [releases page](https://github.com/gamersi/PassmanTRS/releases).
