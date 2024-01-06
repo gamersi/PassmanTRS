@@ -7,8 +7,10 @@
 	import AddPw from './AddPw.svelte';
 	import View from './View.svelte';
 	import EditPw from './EditPw.svelte';
-	import { masterPassword, theme } from './utils/stores';
+	import { masterPassword, theme, isSettingsOpen } from './utils/stores';
 	import { updateTheme } from './utils/utillities';
+	import SettingsDialog from './components/SettingsDialog.svelte';
+	import ChangeMasterPw from './ChangeMasterPw.svelte';
 
   // @ts-ignore
   const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -71,9 +73,35 @@
   }
 
   detectColorScheme();
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.key === 't') {
+      theme.set($theme === "light" ? "dark" : "light");
+      localStorage.setItem("theme", $theme);
+      updateTheme($theme);
+    }
+    if (e.ctrlKey && e.key === 's' && $masterPassword.length > 0) {
+      isSettingsOpen.set(true);
+    }
+  });
 </script>
 
 <main>
+  <SettingsDialog isOpen={isSettingsOpen}>
+    <button class="btn" on:click={() => {
+      isSettingsOpen.set(false);
+      location.href = '/cmpw';
+    }}>
+      Masterpasswort ändern
+    </button>
+    <button class="btn" on:click={() => {
+      theme.set($theme === "light" ? "dark" : "light");
+      localStorage.setItem("theme", $theme);
+      updateTheme($theme);
+    }}>
+      Theme ändern
+    </button>
+  </SettingsDialog>
   {#if !isTauri}
     <div class="alert alert-warning" role="alert">
       Diese App funktioniert nur innerhalb von der Tauri-App! Bitte starte die App mit <code>npm run tauri dev</code>! Hier werden nur Dummy-Daten angezeigt!
@@ -123,7 +151,12 @@
         type="password"
         placeholder="Masterpasswort"
       />
-      <button type="submit">Bestätigen</button>
+      <button class="btn " type="submit">Bestätigen</button>
+    </form>
+    <p class="tips">
+      <span class="tip">Tipp: Du kannst <code>Strg + T</code> drücken, um das Theme zu wechseln.</span><br />
+      <span class="tip">Tipp: Du kannst <code>Strg + S</code> drücken, um die Einstellungen zu öffnen. (Nur nach Eingabe des Masterpassworts)</span>
+    </p>
   </div>
   {:else}
   <Router>
@@ -131,6 +164,7 @@
     <Route path="/addPw" component={AddPw} />
     <Route path="/viewPw" component={View} />
     <Route path="/editPw" component={EditPw} />
+    <Route path="/cmpw" component={ChangeMasterPw} />
   </Router>
   {/if}
 </main>

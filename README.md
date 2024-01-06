@@ -9,8 +9,11 @@
 - [x] password encrypted in AES-256-GCM
 - [x] copy to clipboard
 - [x] Dark & Light theme
+- [x] settings
+- [x] master password change
 
 ## Upcoming Features
+- [ ] english translation (currently only german)
 - [ ] password generation
 - [ ] password strength meter
 - [ ] password sharing
@@ -19,11 +22,10 @@
 - [ ] password import/export
 - [ ] easy vault backup
 - [ ] search
-- [ ] settings
-- [ ] master password change
 
 ## News
-- ⌈ 01.01.2024: [v0.1.0 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.0)
+- ⌈ 07.01.2024: [v0.1.1 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.1)
+- | 01.01.2024: [v0.1.0 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.0)
 - | December 2023: Development resumed
 - | June 2023: Development paused
 - ⌊ May 2023: Development started

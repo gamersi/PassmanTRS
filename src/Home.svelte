@@ -11,10 +11,10 @@
 	import FaLink from 'svelte-icons/fa/FaLink.svelte';
 	import FaLock from 'svelte-icons/fa/FaLock.svelte';
 	import FaCopy from 'svelte-icons/fa/FaCopy.svelte';
-	import FaMoon from 'svelte-icons/fa/FaMoon.svelte';
-	import FaSun from 'svelte-icons/fa/FaSun.svelte';
-	import { passwords, masterPassword, theme } from "./utils/stores";
-	import { updateTheme } from "./utils/utillities";
+	import FaCog from 'svelte-icons/fa/FaCog.svelte'
+	
+	import { passwords, masterPassword, isSettingsOpen } from "./utils/stores";
+	
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -91,15 +91,9 @@
 		<h1>Passwörter</h1>
 		<div class="btn-group">
 			<button class="btn btn-icon btn-primary" on:click={() => {
-				theme.set($theme === "light" ? "dark" : "light");
-				localStorage.setItem("theme", $theme);
-				updateTheme($theme);
+				isSettingsOpen.set(true);
 			}}>
-				{#if $theme === "light"}
-					<FaMoon />
-				{:else}
-					<FaSun />
-				{/if}
+				<FaCog />
 			</button>
 			<button class="btn btn-icon btn-primary" on:click={logOut}>
 				<FaLock />
@@ -206,9 +200,6 @@
 		display: flex;
 		align-items: center;
 	}
-	.btn {
-		margin: 0 10px;
-	}
 
 	.card {
 		display: flex;
@@ -256,50 +247,5 @@
 		justify-content: flex-end;
 		align-items: center;
 		width: 100%;
-	}
-
-	.btn {
-		border-radius: 8px;
-		border: 1px solid transparent;
-		margin: 0 10px;
-		padding: 10px;
-		font-size: 1em;
-		font-weight: 500;
-		font-family: inherit;
-		color: #0f0f0f;
-		background-color: #ffffff;
-		transition: all 0.25s;
-		box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-		width: auto;
-	}
-
-	.btn-icon {
-		width: 40px;
-	}
-
-	.btn-primary {
-		background-color: #007bff;
-		color: white;
-	}
-
-	.btn-primary:hover {
-		background-color: #0069d9;
-	}
-
-	.btn-primary:active {
-		background-color: #0062cc;
-	}
-
-	.btn-danger {
-		background-color: #dc3545;
-		color: white;
-	}
-
-	.btn-danger:hover {
-		background-color: #c82333;
-	}
-
-	.btn-danger:active {
-		background-color: #bd2130;
 	}
 </style>
