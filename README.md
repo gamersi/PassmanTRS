@@ -38,6 +38,9 @@
 1. Download the latest release from the [releases page](https://github.com/gamersi/PassmanTRS/releases).
 2. Either run the .AppImage file or install the .deb file. You may need to make the .AppImage file executable by running `chmod +x [file].AppImage`.
 
+### Arch Linux
+1. You can install the application from the [AUR](https://aur.archlinux.org/packages/passmantrs-bin/) by running `yay -S passmantrs-bin`.
+
 ### Mac (Intel only for now)
 1. Download the latest release from the [releases page](https://github.com/gamersi/PassmanTRS/releases).
 2. Install the .dmg or the .app.tar.gz file by dragging the extracted .app file to your Applications folder.
