@@ -11,6 +11,11 @@
 	import { updateTheme } from './utils/utillities';
 	import SettingsDialog from './components/SettingsDialog.svelte';
 	import ChangeMasterPw from './ChangeMasterPw.svelte';
+  import { i18nInit } from './locales/i18n';
+  import { _ } from 'svelte-i18n';
+	import LanguageSelector from './components/LanguageSelector.svelte';
+  
+  i18nInit();
 
   // @ts-ignore
   const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -92,45 +97,46 @@
       isSettingsOpen.set(false);
       location.href = '/cmpw';
     }}>
-      Masterpasswort ändern
+      {$_('settings.change.masterpassword')}
     </button>
     <button class="btn" on:click={() => {
       theme.set($theme === "light" ? "dark" : "light");
       localStorage.setItem("theme", $theme);
       updateTheme($theme);
     }}>
-      Theme ändern
+      {$_('settings.change.theme')}
     </button>
+    <LanguageSelector />
   </SettingsDialog>
   {#if !isTauri}
     <div class="alert alert-warning" role="alert">
-      Diese App funktioniert nur innerhalb von der Tauri-App! Bitte starte die App mit <code>npm run tauri dev</code>! Hier werden nur Dummy-Daten angezeigt!
+      {$_('settings.nobrowsersupport')}
     </div>
   {/if}
   {#if $masterPassword.length === 0 && isTauri}
   <div class="row">
-    <h1>Masterpasswort</h1>
+    <h1>{$_("masterpassword.base")}</h1>
   </div>
   <div class="contents">
-    <h3>Bitte Masterpasswort eingeben</h3>
+    <h3>{$_("masterpassword.enter")}</h3>
     <form
       on:submit|preventDefault={(e) => {
         if (!isTauri) {
-          alert("Diese Funktion ist nur in der Desktop App verfügbar!");
+          alert($_('settings.nobrowsersupport'));
           return;
         }
         if (e.target === null || e.target[0] === null || e.target[1] === null) {
-          message("Bitte ein Passwort eingeben!");
+          message($_('masterpassword.enter'));
           return;
         }
 
         if (e.target[0].value.length === 0) {
-          message("Bitte ein Passwort eingeben!");
+          message($_('masterpassword.enter'));
           return;
         }
         const password = e.target[0].value;
         e.target[0].disabled = true;
-        e.target[0].placeholder = "Login wird verifiziert...";
+        e.target[0].placeholder = $_('masterpassword.verifying');
         e.target[0].value = "";
         e.target[1].disabled = true;
         console.log(e.target[0])
@@ -141,22 +147,23 @@
           if (res) {
             setMasterPassword(password);
           } else {
-            e.target[0].placeholder = "Masterpasswort";
+            e.target[0].placeholder = $_('masterpassword.enter');
             e.target[0].value = password;
-            message("Falsches Passwort!");
+            message($_('masterpassword.wrong'));
           }
         });
       }}>
       <input
         type="password"
-        placeholder="Masterpasswort"
+        placeholder={$_("masterpassword.base")}
       />
-      <button class="btn " type="submit">Bestätigen</button>
+      <button class="btn " type="submit">{$_("settings.login")}</button>
     </form>
     <p class="tips">
-      <span class="tip">Tipp: Du kannst <code>Strg + T</code> drücken, um das Theme zu wechseln.</span><br />
-      <span class="tip">Tipp: Du kannst <code>Strg + S</code> drücken, um die Einstellungen zu öffnen. (Nur nach Eingabe des Masterpassworts)</span>
+      <span class="tip">{$_("tips.theme")}</span><br />
+      <span class="tip">{$_("tips.settings")}</span>
     </p>
+    <LanguageSelector />
   </div>
   {:else}
   <Router>

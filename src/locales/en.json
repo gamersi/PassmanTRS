@@ -1,0 +1,68 @@
+{
+    "masterpassword": {
+        "base": "Masterpassword",
+        "enter": "Please enter your masterpassword",
+        "wrong": "Wrong masterpassword!",
+        "old": "Old masterpassword",
+        "new": "New masterpassword",
+        "repeatnew": "Repeat new masterpassword",
+        "verifying": "Login is being verified...",
+        "match": "Passwords do not match!",
+        "success": "Masterpassword changed successfully!",
+        "wrongold": "Wrong old masterpassword!"
+    },
+    "tips": {
+        "theme": "Tip: You can change the theme in the settings or by pressing Ctrl+T",
+        "settings": "Tip: You can open the settings by pressing Ctrl+S or by clicking on the settings icon in the top right corner (only possible when you are logged in)"
+    },
+    "settings": {
+        "base": "Settings",
+        "language": "Language",
+        "change": {
+            "base": "Change",
+            "masterpassword": "Change masterpassword",
+            "theme": "toggle theme"
+        },
+        "save": "Save",
+        "close": "Close",
+        "cancel": "Cancel",
+        "login": "Login",
+        "nobrowsersupport": "This does only work in the Tauri app."
+    },
+    "start": {
+        "title": "Passwords",
+        "placeholder": {
+            "name": "No Name",
+            "username": "No Username",
+            "copy": "Copying password to clipboard not supported",
+            "encrypted": "This password could not be decrypted"
+        }
+    },
+    "addpw": {
+        "base": "Add password",
+        "name": "Name",
+        "username": "Username",
+        "password": "Password",
+        "url": "URL",
+        "notes": "Notes",
+        "add": "Add"
+    },
+    "editpw": {
+        "base": "Edit password",
+        "name": "Name",
+        "username": "Username",
+        "password": "Password",
+        "url": "URL",
+        "notes": "Notes",
+        "save": "Save",
+        "noid": "No id provided"
+    },
+    "viewpw": {
+        "base": "View password",
+        "name": "Name",
+        "username": "Username",
+        "password": "Password",
+        "url": "URL",
+        "notes": "Notes"
+    }
+}

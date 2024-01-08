@@ -1,6 +1,7 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri'
 	import type { Password } from './utils/types';
+	import { _ } from 'svelte-i18n';
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -37,7 +38,7 @@
         }
     } else {
         if (passwordId == null) {
-            alert('Keine ID vorhanden')
+            alert($_('editpw.noid'))
         } else {
             invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res) => {
                 let password_res = res as Password;
@@ -59,7 +60,7 @@
 
     function closeWindow() {
         if (!isTauri) {
-            alert('Dieser Button funktioniert nur in der Tauri App')
+            alert($_('settings.nobrowsersupport'))
             return
         }
         invoke('close_view_password')
@@ -67,28 +68,28 @@
 </script>
 
 <main class="container">
-    <h1>Passwort ansehen</h1>
+    <h1>{$_("viewpw.base")}</h1>
     <div class="mb-3">
-        <label for="name" class="form-label">Name</label>
-        <input type="text" class="form-control" id="name" placeholder="Name" value="{password.name}" readonly>
+        <label for="name" class="form-label">{$_("viewpw.name")}</label>
+        <input type="text" class="form-control" id="name" placeholder={$_("viewpw.name")} value="{password.name}" readonly>
     </div>
     <div class="mb-3">
-        <label for="username" class="form-label">Benutzername</label>
-        <input type="text" class="form-control" id="username" placeholder="Benutzername" value="{password.username}" readonly>
+        <label for="username" class="form-label">{$_("viewpw.username")}</label>
+        <input type="text" class="form-control" id="username" placeholder={$_("viewpw.username")} value="{password.username}" readonly>
     </div>
     <div class="mb-3">
-        <label for="password" class="form-label">Passwort</label>
-        <input type="text" class="form-control" id="password" placeholder="Passwort" value="{password.decrypted_password}" readonly>
+        <label for="password" class="form-label">P{$_("viewpw.password")}</label>
+        <input type="text" class="form-control" id="password" placeholder={$_("viewpw.password")} value="{password.decrypted_password}" readonly>
     </div>
     <div class="mb-3">
-        <label for="url" class="form-label">URL</label>
-        <input type="text" class="form-control" id="url" placeholder="URL" value="{password.url}" readonly>
+        <label for="url" class="form-label">{$_("viewpw.url")}</label>
+        <input type="text" class="form-control" id="url" placeholder={$_("viewpw.url")} value="{password.url}" readonly>
     </div>
     <div class="mb-3">
-        <label for="notes" class="form-label">Notizen</label>
-        <input type="text" class="form-control" id="notes" placeholder="Notizen" value="{password.notes}" readonly>
+        <label for="notes" class="form-label">{$_("viewpw.notes")}</label>
+        <input type="text" class="form-control" id="notes" placeholder={$_("viewpw.notes")} value="{password.notes}" readonly>
     </div>
-    <button type="button" class="btn btn-primary" on:click="{() => closeWindow()}">Schließen</button>
+    <button type="button" class="btn btn-primary" on:click="{() => closeWindow()}">{$_("settings.close")}</button>
 </main>
 
 <style>

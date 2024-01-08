@@ -14,6 +14,7 @@
 	import FaCog from 'svelte-icons/fa/FaCog.svelte'
 	
 	import { passwords, masterPassword, isSettingsOpen } from "./utils/stores";
+	import { _ } from "svelte-i18n";
 	
 
     // @ts-ignore
@@ -88,7 +89,7 @@
 
 <main class="container">
 	<div class="row">
-		<h1>Passwörter</h1>
+		<h1>{$_("start.title")}</h1>
 		<div class="btn-group">
 			<button class="btn btn-icon btn-primary" on:click={() => {
 				isSettingsOpen.set(true);
@@ -110,8 +111,8 @@
 		{#each $passwords as password}
 			<div class="card">
 				<div class="userInfo">
-					<h1 class="title">{password.name || "Kein Name"}</h1>
-					<p class="username">{password.username || "Kein Benutzername"}</p>
+					<h1 class="title">{password.name || $_("start.placeholder.name")}</h1>
+					<p class="username">{password.username || $_("start.placeholder.username")}</p>
 				</div>
 				<div class="card-btns btn-group">
 					{#if password.url}
@@ -119,7 +120,7 @@
 						class="btn btn-icon btn-primary"
 						on:click={() => {
 							if (!isTauri) {
-								alert("Diese Funktion ist nur in der Desktop App verfügbar!");
+								alert($_("settings.nobrowsersupport"));
 								return;
 							}
 							openURL(password.url);
@@ -131,15 +132,15 @@
 						class="btn btn-icon btn-primary"
 						on:click={() => {
 							if (!isTauri) {
-								alert("Diese Funktion ist nur in der Desktop App verfügbar!");
+								alert($_("settings.nobrowsersupport"));
 								return;
 							}
 							if (!window.navigator.clipboard) {
-								alert("Kopieren wird auf dein nicht!");
+								alert($_("start.placeholder.copy"));
 								return;
 							}
 							if (!password.decrypted_password) {
-								alert("Das Passwort ist nicht entschlüsselt!");
+								alert($_("start.placeholder.encrypted"));
 								return;
 							}
 							window.navigator.clipboard.writeText(password.decrypted_password);
@@ -172,7 +173,7 @@
 						class="btn btn-icon btn-danger"
 						on:click={() => {
                             if (!isTauri) {
-                                alert("Diese Funktion ist nur in der Desktop App verfügbar!");
+								alert($_("settings.nobrowsersupport"));
                                 return;
                             }
 							invoke("delete_password", {id: password.id}).then(() => {

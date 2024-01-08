@@ -1,4 +1,5 @@
 <script>
+	import { _ } from "svelte-i18n";
 	import { writable } from "svelte/store";
 
     export let isOpen = writable(false);
@@ -19,7 +20,7 @@
     <div class="modal" on:click={closeModal}>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div class="modal-content" on:click={(e) => e.stopPropagation()}>
-            <h2>Einstellungen</h2>
+            <h2>{$_("settings.base")}</h2>
             <slot></slot>
         </div>
     </div>
