@@ -43,7 +43,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "passwordmanager",
+        "title": "PassmanTRS",
         "width": 800,
         "height": 600,
         "minWidth": 550,

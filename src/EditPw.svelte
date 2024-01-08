@@ -2,6 +2,7 @@
     import { invoke } from '@tauri-apps/api/tauri';
 	import type { Password, Block } from './utils/types';
     import { parseURL } from './utils/utillities';
+    import { _ } from 'svelte-i18n';
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
@@ -48,17 +49,17 @@
                 password = password_res
             })
         } else {
-            alert('Keine ID vorhanden')
+            alert($_('editpw.noid'))
         }
     }
 
     function editPassword(event: any) {
         if (!isTauri) {
-            alert('Dieser Button funktioniert nur in der Tauri App')
+            alert($_('settings.nobrowsersupport'))
             return
         }
         if (passwordId == null) {
-            alert('Keine ID vorhanden')
+            alert($_('editpw.noid'))
             return
         }
         invoke('edit_password', {
@@ -78,34 +79,34 @@
 </script>
 
 <main class="container">
-    <h1>Passwort bearbeiten</h1>
+    <h1>{$_("editpw.base")}</h1>
     <form on:submit|preventDefault={editPassword}>
-        <div class="mb-3">
-            <label for="name" class="form-label">Name</label>
-            <input type="text" class="form-control" id="name" placeholder="Name" value={password.name}>
+        <div class="row">
+            <label for="name" class="form-label">{$_("editpw.name")}</label>
+            <input type="text" class="form-control" id="name" placeholder={$_("editpw.name")} value={password.name}>
         </div>
-        <div class="mb-3">
-            <label for="username" class="form-label">Benutzername</label>
-            <input type="text" class="form-control" id="username" placeholder="Benutzername" value={password.username}>
+        <div class="row">
+            <label for="username" class="form-label">{$_("editpw.username")}</label>
+            <input type="text" class="form-control" id="username" placeholder={$_("editpw.username")} value={password.username}>
         </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Passwort</label>
-            <input type="text" class="form-control" id="password" placeholder="Passwort" value={password.decrypted_password}>
+        <div class="row">
+            <label for="password" class="form-label">{$_("editpw.password")}</label>
+            <input type="text" class="form-control" id="password" placeholder={$_("editpw.password")} value={password.decrypted_password}>
         </div>
-        <div class="mb-3">
-            <label for="url" class="form-label">URL</label>
-            <input type="text" class="form-control" id="url" placeholder="URL" value={password.url}>
+        <div class="row">
+            <label for="url" class="form-label">{$_("editpw.url")}</label>
+            <input type="text" class="form-control" id="url" placeholder={$_("editpw.url")} value={password.url}>
         </div>
-        <div class="mb-3">
-            <label for="notes" class="form-label">Notizen</label>
-            <input type="text" class="form-control" id="notes" placeholder="Notizen" value={password.notes}>
+        <div class="row">
+            <label for="notes" class="form-label">{$_("editpw.notes")}</label>
+            <input type="text" class="form-control" id="notes" placeholder={$_("editpw.notes")} value={password.notes}>
         </div>
-        <button type="submit" class="btn btn-primary">Passwort bearbeiten</button>
+        <button type="submit" class="btn btn-primary">{$_("editpw.base")}</button>
     </form>
 </main>
 
 <style>
-    .mb-3 {
+    .row {
         margin-bottom: 5px;
     }
 </style>
