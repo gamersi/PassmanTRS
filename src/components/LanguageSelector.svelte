@@ -6,6 +6,7 @@
 
 	function changeLanguage() {
 		setLocale(selectedLanguage);
+        localStorage.setItem("locale", selectedLanguage);
 	}
 </script>
 

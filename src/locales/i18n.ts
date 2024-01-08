@@ -13,11 +13,18 @@ export function i18nInit() {
     addMessages("en", en);
     addMessages("de", de);
 
-    let navLocale = getLocaleFromNavigator();
-    if (navLocale) {
-        navLocale = navLocale.split("-")[0];
+    let navLocale;
+
+    const localLocale = localStorage.getItem("locale");
+    if (localLocale && availableLocales.includes(localLocale)) {
+        navLocale = localLocale;
     } else {
-        navLocale = "en";
+        let _navLocale = getLocaleFromNavigator();
+        if (_navLocale) {
+            navLocale = _navLocale.split("-")[0];
+        } else {
+            navLocale = "en";
+        }
     }
 
     init({
