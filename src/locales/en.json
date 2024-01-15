@@ -35,7 +35,8 @@
             "name": "No Name",
             "username": "No Username",
             "copy": "Copying password to clipboard not supported",
-            "encrypted": "This password could not be decrypted"
+            "encrypted": "This password could not be decrypted",
+            "nopasswords": "No passwords found"
         }
     },
     "addpw": {

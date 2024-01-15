@@ -106,7 +106,7 @@
 	</div>
 	<div class="contents">
 		{#if $passwords.length === 0}
-			<p>Keine Passwörter vorhanden</p>
+			<p>{$_("start.placeholder.nopasswords")}</p>
 		{/if}
 		{#each $passwords as password}
 			<div class="card">

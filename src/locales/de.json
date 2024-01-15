@@ -35,7 +35,8 @@
             "name": "Kein Name",
             "username": "Kein Benutzername",
             "copy": "Kopieren wird nicht unterstützt",
-            "encrypted": "Dieses Passwort konnte nicht entschlüsselt werden"
+            "encrypted": "Dieses Passwort konnte nicht entschlüsselt werden",
+            "nopasswords": "Keine Passwörter vorhanden"
         }
     },
     "addpw": {
