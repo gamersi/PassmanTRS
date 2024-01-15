@@ -25,6 +25,18 @@
 - [ ] easy vault backup
 - [ ] search
 
+## Screenshots
+![screenshot1](images/screenshot1.png)
+
+![screenshot2](images/screenshot2.png)
+
+![screenshot3](images/screenshot3.png)
+
+![screenshot4](images/screenshot4.png)
+
+![screenshot5](images/screenshot5.png)
+
+
 ## News
 - ⌈ 08.01.2024: [v0.1.2 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.2) (the multilingual release)
 - | 07.01.2024: [v0.1.1 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.1)
