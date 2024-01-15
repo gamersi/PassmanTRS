@@ -20,7 +20,7 @@
             url: parseURL(event.target.url.value),
             notes: event.target.notes.value,
             masterPassword
-        }).then((res) => {
+        }).then((res: any) => {
             console.log(res)
             invoke('close_add_password')
         })

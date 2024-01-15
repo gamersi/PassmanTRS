@@ -39,7 +39,7 @@
         }
     } else {
         if (passwordId != null) {
-            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res) => {
+            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: Password | undefined) => {
                 let password_res = res as Password;
                 password_res.name = password_res.name.replace(/^"(.*)"$/, '$1');
                 password_res.username = password_res.username.replace(/^"(.*)"$/, '$1');
@@ -70,7 +70,7 @@
             url: parseURL(event.target.url.value),
             notes: event.target.notes.value,
             masterPassword
-        }).then((res) => {
+        }).then((res: any) => {
             console.log(res)
 
             invoke('close_edit_password')
