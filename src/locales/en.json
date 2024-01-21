@@ -35,7 +35,8 @@
             "name": "No Name",
             "username": "No Username",
             "copy": "Copying password to clipboard not supported",
-            "encrypted": "This password could not be decrypted"
+            "encrypted": "This password could not be decrypted",
+            "nopasswords": "No passwords found"
         }
     },
     "addpw": {
@@ -64,5 +65,15 @@
         "password": "Password",
         "url": "URL",
         "notes": "Notes"
+    },
+    "generate": {
+        "base": "Generate password",
+        "length": "Length",
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "numbers": "Numbers",
+        "symbols": "Symbols",
+        "generate": "Generate",
+        "error": "The length must be higher than the other options combined!"
     }
 }

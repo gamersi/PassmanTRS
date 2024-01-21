@@ -35,7 +35,8 @@
             "name": "Kein Name",
             "username": "Kein Benutzername",
             "copy": "Kopieren wird nicht unterstützt",
-            "encrypted": "Dieses Passwort konnte nicht entschlüsselt werden"
+            "encrypted": "Dieses Passwort konnte nicht entschlüsselt werden",
+            "nopasswords": "Keine Passwörter vorhanden"
         }
     },
     "addpw": {
@@ -64,5 +65,15 @@
         "password": "Passwort",
         "url": "URL",
         "notes": "Notizen"
+    },
+    "generate": {
+        "base": "Passwort generieren",
+        "length": "Länge",
+        "uppercase": "Großbuchstaben",
+        "lowercase": "Kleinbuchstaben",
+        "numbers": "Zahlen",
+        "symbols": "Symbole",
+        "generate": "Generieren",
+        "error": "Die Länge muss größer sein, als alle Minima zusammen"
     }
 }

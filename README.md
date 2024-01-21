@@ -13,17 +13,29 @@
 - [x] Dark & Light theme
 - [x] settings
 - [x] master password change
+- [x] password generation
 
 
 ## Upcoming Features
-- [ ] password generation
 - [ ] password strength meter
 - [ ] password sharing
 - [ ] password expiration
-- [ ] password history
+- [ ] password generation history
 - [ ] password import/export
 - [ ] easy vault backup
 - [ ] search
+
+## Screenshots
+![screenshot1](images/screenshot1.png)
+
+![screenshot2](images/screenshot2.png)
+
+![screenshot3](images/screenshot3.png)
+
+![screenshot4](images/screenshot4.png)
+
+![screenshot5](images/screenshot5.png)
+
 
 ## News
 - ⌈ 08.01.2024: [v0.1.2 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.2) (the multilingual release)

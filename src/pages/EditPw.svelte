@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri';
-	import type { Password, Block } from './utils/types';
-    import { parseURL } from './utils/utillities';
+	import type { Password, Block } from '../utils/types';
+    import { parseURL } from '../utils/utillities';
     import { _ } from 'svelte-i18n';
 
     // @ts-ignore
@@ -39,11 +39,11 @@
         }
     } else {
         if (passwordId != null) {
-            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res) => {
+            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: any) => {
                 let password_res = res as Password;
                 password_res.name = password_res.name.replace(/^"(.*)"$/, '$1');
                 password_res.username = password_res.username.replace(/^"(.*)"$/, '$1');
-                password_res.decrypted_password = password_res.decrypted_password ? password_res.decrypted_password.replace(/^"(.*)"$/, '$1') : 'Kein Passwort';
+                password_res.decrypted_password = password_res.decrypted_password ? password_res.decrypted_password.replace(/^"(.*)"$/, '$1') : '';
                 password_res.url = password_res.url.replace(/^"(.*)"$/, '$1');
                 password_res.notes = password_res.notes.replace(/^"(.*)"$/, '$1');
                 password = password_res
@@ -70,7 +70,7 @@
             url: parseURL(event.target.url.value),
             notes: event.target.notes.value,
             masterPassword
-        }).then((res) => {
+        }).then((res: any) => {
             console.log(res)
 
             invoke('close_edit_password')
@@ -102,11 +102,26 @@
             <input type="text" class="form-control" id="notes" placeholder={$_("editpw.notes")} value={password.notes}>
         </div>
         <button type="submit" class="btn btn-primary">{$_("editpw.base")}</button>
+        <button type="button" class="btn" on:click={() => invoke('close_edit_password')}>{$_("settings.cancel")}</button>
     </form>
 </main>
 
 <style>
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-top: 20px;
+    }
+    
     .row {
-        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+        margin: 10px;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 20px;
     }
 </style>
