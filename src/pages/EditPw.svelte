@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri';
-	import type { Password, Block } from './utils/types';
-    import { parseURL } from './utils/utillities';
+	import type { Password, Block } from '../utils/types';
+    import { parseURL } from '../utils/utillities';
     import { _ } from 'svelte-i18n';
 
     // @ts-ignore
@@ -39,7 +39,7 @@
         }
     } else {
         if (passwordId != null) {
-            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: Password | undefined) => {
+            invoke('get_password', {id: parseInt(passwordId), masterPassword}).then((res: any) => {
                 let password_res = res as Password;
                 password_res.name = password_res.name.replace(/^"(.*)"$/, '$1');
                 password_res.username = password_res.username.replace(/^"(.*)"$/, '$1');

@@ -1,9 +1,9 @@
 <script lang="ts">
 	// @ts-nocheck	workaround for TS complaining about the icon imports
-	import {invoke} from "@tauri-apps/api/tauri";
-	import {listen} from "@tauri-apps/api/event";
+	import { invoke } from "@tauri-apps/api/tauri";
+	import { listen } from "@tauri-apps/api/event";
 	import { open } from '@tauri-apps/api/shell';
-	import type { Password } from "./utils/types";
+	import type { Password } from "../utils/types";
 	import FaPlus from "svelte-icons/fa/FaPlus.svelte";
 	import FaEye from "svelte-icons/fa/FaEye.svelte";
 	import FaPen from "svelte-icons/fa/FaPen.svelte";
@@ -13,7 +13,7 @@
 	import FaCopy from 'svelte-icons/fa/FaCopy.svelte';
 	import FaCog from 'svelte-icons/fa/FaCog.svelte'
 	
-	import { passwords, masterPassword, isSettingsOpen } from "./utils/stores";
+	import { passwords, masterPassword, isSettingsOpen } from "../utils/stores";
 	import { _ } from "svelte-i18n";
 	
 
