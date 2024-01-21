@@ -14,7 +14,7 @@ use std::io::{prelude::*, SeekFrom, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use tauri::{
-    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem,
+    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem, Size, LogicalSize,
 };
 
 const PBKDF2_ROUNDS: u32 = 100_000;
@@ -531,10 +531,13 @@ fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
 fn main() {
     let hide = CustomMenuItem::new("hide".to_string(), "Hide");
     let generator = CustomMenuItem::new("generator".to_string(), "Password Generator");
+    let about = CustomMenuItem::new("about".to_string(), "About");
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
     let tray_menu = SystemTrayMenu::new()
         .add_item(hide)
         .add_item(generator)
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(about)
         .add_native_item(SystemTrayMenuItem::Separator)
         .add_item(quit);
     let tray = SystemTray::new().with_menu(tray_menu);
@@ -564,6 +567,26 @@ fn main() {
                     .set_title("PassmanTRS - Password Generator")
                     .map_err(|err| println!("{:?}", err))
                     .ok();
+                } else if id == "about" {
+                    let window = tauri::WindowBuilder::new(
+                        app,
+                        "about",
+                        tauri::WindowUrl::App("about".into()),
+                    )
+                    .build()
+                    .unwrap();
+                    window
+                        .set_size(Size::Logical(LogicalSize {
+                            width: 600.0,
+                            height: 250.0,
+                        }))
+                        .unwrap();
+                    window
+                        .set_title("PassmanTRS - About")
+                        .map_err(|err| println!("{:?}", err))
+                        .ok();
+                    window.set_resizable(false).unwrap();
+                    window.show().unwrap();
                 } else {
                     println!("Unknown menu item clicked: {}", id);
                 }

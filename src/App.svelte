@@ -1,6 +1,6 @@
 <script lang="ts">
   // @ts-nocheck	workaround for TS complaining about the event targets
-  import { Router, Link, Route } from 'svelte-routing';
+  import { Router, Route } from 'svelte-routing';
   import { invoke } from '@tauri-apps/api/tauri';
   import { message } from '@tauri-apps/api/dialog';
   import Home from './pages/Home.svelte'
@@ -15,6 +15,7 @@
   import { _ } from 'svelte-i18n';
 	import LanguageSelector from './components/LanguageSelector.svelte';
 	import GeneratePw from './pages/GeneratePw.svelte';
+  import About from './pages/About.svelte';
   
   i18nInit();
 
@@ -90,6 +91,8 @@
       isSettingsOpen.set(true);
     }
   });
+
+  const isAbout = location.pathname === '/about';
 </script>
 
 <main>
@@ -114,7 +117,7 @@
       {$_('settings.nobrowsersupport')}
     </div>
   {/if}
-  {#if $masterPassword.length === 0 && isTauri}
+  {#if $masterPassword.length === 0 && isTauri && !isAbout}
   <div class="row">
     <h1>{$_("masterpassword.base")}</h1>
   </div>
@@ -174,6 +177,7 @@
     <Route path="/editPw" component={EditPw} />
     <Route path="/cmpw" component={ChangeMasterPw} />
     <Route path="/generator" component={GeneratePw} />
+    <Route path="/about" component={About} />
   </Router>
   {/if}
 </main>

@@ -14,6 +14,11 @@ export default defineConfig(() => ({
     }),
   ],
 
+  define: {
+    '__APP_VERSION__': JSON.stringify(process.env.npm_package_version),
+    '__BUILD_TIME__': JSON.stringify(new Date().toUTCString())
+  },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   // prevent vite from obscuring rust errors
   clearScreen: false,
