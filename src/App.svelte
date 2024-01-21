@@ -1,6 +1,6 @@
 <script lang="ts">
   // @ts-nocheck	workaround for TS complaining about the event targets
-  import {Router, Route} from 'svelte-navigator'
+  import { Router, Link, Route } from 'svelte-routing';
   import { invoke } from '@tauri-apps/api/tauri';
   import { message } from '@tauri-apps/api/dialog';
   import Home from './pages/Home.svelte'

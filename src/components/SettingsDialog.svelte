@@ -17,9 +17,11 @@
 
 {#if $isOpen}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="modal" on:click={closeModal}>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div class="modal-content" on:click={(e) => e.stopPropagation()}>
+        <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+        <div class="modal-content" on:click={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
             <h2>{$_("settings.base")}</h2>
             <slot></slot>
         </div>
