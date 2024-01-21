@@ -44,7 +44,7 @@
                 let password_res = res as Password;
                 password_res.name = password_res.name.replace(/^"(.*)"$/, '$1');
                 password_res.username = password_res.username.replace(/^"(.*)"$/, '$1');
-                password_res.decrypted_password = password_res.decrypted_password ? password_res.decrypted_password.replace(/^"(.*)"$/, '$1') : 'Kein Passwort';
+                password_res.decrypted_password = password_res.decrypted_password ? password_res.decrypted_password.replace(/^"(.*)"$/, '$1') : '';
                 password_res.url = password_res.url.replace(/^"(.*)"$/, '$1');
                 password_res.notes = password_res.notes.replace(/^"(.*)"$/, '$1');
                 // replace empty strings with n/a
@@ -69,23 +69,23 @@
 
 <main class="container">
     <h1>{$_("viewpw.base")}</h1>
-    <div class="mb-3">
+    <div class="row">
         <label for="name" class="form-label">{$_("viewpw.name")}</label>
         <input type="text" class="form-control" id="name" placeholder={$_("viewpw.name")} value="{password.name}" readonly>
     </div>
-    <div class="mb-3">
+    <div class="row">
         <label for="username" class="form-label">{$_("viewpw.username")}</label>
         <input type="text" class="form-control" id="username" placeholder={$_("viewpw.username")} value="{password.username}" readonly>
     </div>
-    <div class="mb-3">
-        <label for="password" class="form-label">P{$_("viewpw.password")}</label>
+    <div class="row">
+        <label for="password" class="form-label">{$_("viewpw.password")}</label>
         <input type="text" class="form-control" id="password" placeholder={$_("viewpw.password")} value="{password.decrypted_password}" readonly>
     </div>
-    <div class="mb-3">
+    <div class="row">
         <label for="url" class="form-label">{$_("viewpw.url")}</label>
         <input type="text" class="form-control" id="url" placeholder={$_("viewpw.url")} value="{password.url}" readonly>
     </div>
-    <div class="mb-3">
+    <div class="row">
         <label for="notes" class="form-label">{$_("viewpw.notes")}</label>
         <input type="text" class="form-control" id="notes" placeholder={$_("viewpw.notes")} value="{password.notes}" readonly>
     </div>
@@ -93,7 +93,21 @@
 </main>
 
 <style>
-    .mb-3 {
-        margin-bottom: 5px;
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin-top: 20px;
+    }
+    
+    .row {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 20px;
     }
 </style>

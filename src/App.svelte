@@ -14,6 +14,7 @@
   import { i18nInit } from './locales/i18n';
   import { _ } from 'svelte-i18n';
 	import LanguageSelector from './components/LanguageSelector.svelte';
+	import GeneratePw from './pages/GeneratePw.svelte';
   
   i18nInit();
 
@@ -172,6 +173,7 @@
     <Route path="/viewPw" component={View} />
     <Route path="/editPw" component={EditPw} />
     <Route path="/cmpw" component={ChangeMasterPw} />
+    <Route path="/generator" component={GeneratePw} />
   </Router>
   {/if}
 </main>

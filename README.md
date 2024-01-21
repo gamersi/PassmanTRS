@@ -13,14 +13,14 @@
 - [x] Dark & Light theme
 - [x] settings
 - [x] master password change
+- [x] password generation
 
 
 ## Upcoming Features
-- [ ] password generation
 - [ ] password strength meter
 - [ ] password sharing
 - [ ] password expiration
-- [ ] password history
+- [ ] password generation history
 - [ ] password import/export
 - [ ] easy vault backup
 - [ ] search

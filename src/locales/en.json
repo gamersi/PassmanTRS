@@ -65,5 +65,15 @@
         "password": "Password",
         "url": "URL",
         "notes": "Notes"
+    },
+    "generate": {
+        "base": "Generate password",
+        "length": "Length",
+        "uppercase": "Uppercase",
+        "lowercase": "Lowercase",
+        "numbers": "Numbers",
+        "symbols": "Symbols",
+        "generate": "Generate",
+        "error": "The length must be higher than the other options combined!"
     }
 }

@@ -1,44 +1,39 @@
 import type { GeneratorOptions } from "./types";
 
 export default function generatePassword(length: number, options: GeneratorOptions): string {
-    const lowercase = "abcdefghijklmnopqrstuvwxyz";
-    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const numbers = "0123456789";
-    const symbols = "!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
-    let password = "";
-    let characterSet = "";
+    const { minLowercase, minUppercase, minNumbers, minSymbols } = options;
 
-    if (options.minLowercase > 0) {
-        for (let i = 0; i < options.minLowercase; i++) {
-            password += lowercase[Math.floor(Math.random() * lowercase.length)];
-        }
-        characterSet += lowercase;
+    const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+    const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const numberChars = '0123456789';
+    const symbolChars = '!@#$%^&*()-=_+[]{}|;:,.<>?';
+
+    let password = '';
+
+    for (let i = 0; i < minLowercase; i++) {
+        password += lowercaseChars[Math.floor(Math.random() * lowercaseChars.length)];
     }
 
-    if (options.minUppercase > 0) {
-        for (let i = 0; i < options.minUppercase; i++) {
-            password += uppercase[Math.floor(Math.random() * uppercase.length)];
-        }
-        characterSet += uppercase;
+    for (let i = 0; i < minUppercase; i++) {
+        password += uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)];
     }
 
-    if (options.minNumbers > 0) {
-        for (let i = 0; i < options.minNumbers; i++) {
-            password += numbers[Math.floor(Math.random() * numbers.length)];
-        }
-        characterSet += numbers;
+    for (let i = 0; i < minNumbers; i++) {
+        password += numberChars[Math.floor(Math.random() * numberChars.length)];
     }
 
-    if (options.minSymbols > 0) {
-        for (let i = 0; i < options.minSymbols; i++) {
-            password += symbols[Math.floor(Math.random() * symbols.length)];
-        }
-        characterSet += symbols;
+    for (let i = 0; i < minSymbols; i++) {
+        password += symbolChars[Math.floor(Math.random() * symbolChars.length)];
     }
 
-    for (let i = 0; i < length - password.length; i++) {
-        password += characterSet[Math.floor(Math.random() * characterSet.length)];
+    const remainingChars = length - password.length;
+    const allChars = lowercaseChars + uppercaseChars + numberChars + symbolChars;
+
+    for (let i = 0; i < remainingChars; i++) {
+        password += allChars[Math.floor(Math.random() * allChars.length)];
     }
 
-    return password.split("").sort(() => Math.random() - 0.5).join("");
+    password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+    return password;
 }
