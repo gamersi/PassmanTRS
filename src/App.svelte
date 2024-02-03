@@ -8,7 +8,7 @@
 	import View from './pages/View.svelte';
 	import EditPw from './pages/EditPw.svelte';
 	import { masterPassword, theme, isSettingsOpen } from './utils/stores';
-	import { updateTheme } from './utils/utillities';
+	import { updateTheme } from './utils/utilities';
 	import SettingsDialog from './components/SettingsDialog.svelte';
 	import ChangeMasterPw from './pages/ChangeMasterPw.svelte';
   import { i18nInit } from './locales/i18n';
