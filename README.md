@@ -17,10 +17,10 @@
 
 
 ## Upcoming Features
+- [ ] password generation history
 - [ ] password strength meter
 - [ ] password sharing
 - [ ] password expiration
-- [ ] password generation history
 - [ ] password import/export
 - [ ] easy vault backup
 - [ ] search
