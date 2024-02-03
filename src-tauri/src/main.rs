@@ -115,6 +115,86 @@ fn derive_key(password: &str, salt: &[u8]) -> [u8; 32] {
     key
 }
 
+fn encrypt(data: &[u8], key_byte: &[u8]) -> Block {
+    let key: &Key<Aes256Gcm> = key_byte.into();
+    let cipher = Aes256Gcm::new(&key);
+
+    let nonce = Aes256Gcm::generate_nonce(OsRng);
+
+    let encrypted_data = match cipher.encrypt(&nonce, data) {
+        Ok(encrpted) => {
+            let e = Block {
+                data: encrpted,
+                nonce: nonce.to_vec(),
+            };
+
+            e
+        }
+        Err(err) => {
+            panic!("Could not encrypt data: {:?}", err);
+        }
+    };
+    encrypted_data
+}
+
+fn decrypt(encrypted_data: Block, password_byte: &[u8]) -> Vec<u8> {
+    let key: &Key<Aes256Gcm> = password_byte.into();
+    let nonce = encrypted_data.nonce;
+    let data = encrypted_data.data;
+
+    let cipher = Aes256Gcm::new(&key);
+    let op = cipher
+        .decrypt(GenericArray::from_slice(&nonce), data.as_slice())
+        .expect("decryption failure!");
+    op
+}
+
+fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path.clone())
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.len() == 0 {
+        contents.push_str("[]");
+        file.write_fmt(format_args!("{}", contents)).unwrap();
+    }
+
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let old_key = derive_key(&old_master_pw, &salt);
+    let new_key = derive_key(&new_master_pw, &salt);
+
+    let mut contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
+
+    let mut passwords: Vec<Password> = Vec::new();
+    for password in contents_json.iter_mut() {
+        let encrypted_password = password.password.clone();
+        let decrypted_password = decrypt(encrypted_password.clone(), &old_key);
+        let encrypted_password = encrypt(&decrypted_password, &new_key);
+        passwords.push(Password {
+            id: password.id,
+            name: password.name.to_string(),
+            username: password.username.to_string(),
+            password: encrypted_password,
+            url: password.url.to_string(),
+            notes: password.notes.to_string(),
+            decrypted_password: None,
+        });
+    }
+
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+    true
+}
+
 #[tauri::command]
 fn get_passwords(master_password: String) -> Vec<Password> {
     let path = get_passwords_file_path();
@@ -239,55 +319,6 @@ fn edit_password(
 }
 
 #[tauri::command]
-async fn open_add_password(app: tauri::AppHandle) {
-    let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
-        .build()
-        .unwrap()
-        .set_title("PassmanTRS - add password")
-        .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-        .ok();
-}
-
-#[tauri::command]
-async fn open_edit_password(app: tauri::AppHandle, id: i32) {
-    let _window = tauri::WindowBuilder::new(
-        &app,
-        "editpw",
-        tauri::WindowUrl::App(format!("editPw?id={}", id).into()),
-    )
-    .build()
-    .unwrap()
-    .set_title("PassmanTRS - edit password")
-    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-    .ok();
-}
-
-#[tauri::command]
-async fn open_view_password(app: tauri::AppHandle, id: i32) {
-    let _window = tauri::WindowBuilder::new(
-        &app,
-        "viewpw",
-        tauri::WindowUrl::App(format!("viewPw?id={}", id).into()),
-    )
-    .build()
-    .unwrap()
-    .set_title("PassmanTRS - Passworddetails")
-    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-    .ok();
-}
-
-#[tauri::command]
-async fn open_generator(app: tauri::AppHandle) {
-    let _window =
-        tauri::WindowBuilder::new(&app, "generator", tauri::WindowUrl::App("generator".into()))
-            .build()
-            .unwrap()
-            .set_title("PassmanTRS - Password Generator")
-            .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-            .ok();
-}
-
-#[tauri::command]
 fn add_password(
     name: String,
     username: String,
@@ -366,28 +397,6 @@ fn delete_password(id: i32) {
 }
 
 #[tauri::command]
-fn close_add_password(app: tauri::AppHandle) {
-    app.get_window("addpw").unwrap().close().unwrap();
-    app.emit_all("refresh_passwords", ()).unwrap();
-}
-
-#[tauri::command]
-fn close_edit_password(app: tauri::AppHandle) {
-    app.get_window("editpw").unwrap().close().unwrap();
-    app.emit_all("refresh_passwords", ()).unwrap();
-}
-
-#[tauri::command]
-fn close_view_password(app: tauri::AppHandle) {
-    app.get_window("viewpw").unwrap().close().unwrap();
-}
-
-#[tauri::command]
-fn close_generator(app: tauri::AppHandle) {
-    app.get_window("generator").unwrap().close().unwrap();
-}
-
-#[tauri::command]
 fn delete_passwords() {
     let path = get_passwords_file_path();
     let mut file = std::fs::OpenOptions::new()
@@ -430,40 +439,6 @@ fn validate_master_password(password: String) -> bool {
     }
 }
 
-fn encrypt(data: &[u8], key_byte: &[u8]) -> Block {
-    let key: &Key<Aes256Gcm> = key_byte.into();
-    let cipher = Aes256Gcm::new(&key);
-
-    let nonce = Aes256Gcm::generate_nonce(OsRng);
-
-    let encrypted_data = match cipher.encrypt(&nonce, data) {
-        Ok(encrpted) => {
-            let e = Block {
-                data: encrpted,
-                nonce: nonce.to_vec(),
-            };
-
-            e
-        }
-        Err(err) => {
-            panic!("Could not encrypt data: {:?}", err);
-        }
-    };
-    encrypted_data
-}
-
-fn decrypt(encrypted_data: Block, password_byte: &[u8]) -> Vec<u8> {
-    let key: &Key<Aes256Gcm> = password_byte.into();
-    let nonce = encrypted_data.nonce;
-    let data = encrypted_data.data;
-
-    let cipher = Aes256Gcm::new(&key);
-    let op = cipher
-        .decrypt(GenericArray::from_slice(&nonce), data.as_slice())
-        .expect("decryption failure!");
-    op
-}
-
 #[tauri::command]
 fn change_master_password(old_pw: String, new_pw: String) -> bool {
     let mpw_path = get_master_password_file_path();
@@ -489,52 +464,6 @@ fn change_master_password(old_pw: String, new_pw: String) -> bool {
     mpw_file.set_len(hashed_password.len() as u64).unwrap();
 
     migrate_passwords(old_pw, new_pw)
-}
-
-fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
-    let path = get_passwords_file_path();
-    let mut file = std::fs::OpenOptions::new()
-        .read(true)
-        .create(true)
-        .write(true)
-        .open(path.clone())
-        .unwrap();
-    let mut contents = String::new();
-    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
-    if contents.len() == 0 {
-        contents.push_str("[]");
-        file.write_fmt(format_args!("{}", contents)).unwrap();
-    }
-
-    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
-    let old_key = derive_key(&old_master_pw, &salt);
-    let new_key = derive_key(&new_master_pw, &salt);
-
-    let mut contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
-
-    let mut passwords: Vec<Password> = Vec::new();
-    for password in contents_json.iter_mut() {
-        let encrypted_password = password.password.clone();
-        let decrypted_password = decrypt(encrypted_password.clone(), &old_key);
-        let encrypted_password = encrypt(&decrypted_password, &new_key);
-        passwords.push(Password {
-            id: password.id,
-            name: password.name.to_string(),
-            username: password.username.to_string(),
-            password: encrypted_password,
-            url: password.url.to_string(),
-            notes: password.notes.to_string(),
-            decrypted_password: None,
-        });
-    }
-
-    let contents_string = serde_json::to_string(&passwords).unwrap();
-
-    file.seek(SeekFrom::Start(0)).unwrap();
-
-    file.write_all(contents_string.as_bytes()).unwrap();
-    file.set_len(contents_string.len() as u64).unwrap();
-    true
 }
 
 #[tauri::command]
@@ -585,6 +514,77 @@ fn generate_password(length: u32, options: GeneratorOptions) -> String {
     chars.shuffle(&mut thread_rng());
     password = chars.into_iter().collect();
     password
+}
+
+#[tauri::command]
+async fn open_add_password(app: tauri::AppHandle) {
+    let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
+        .build()
+        .unwrap()
+        .set_title("PassmanTRS - add password")
+        .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+        .ok();
+}
+
+#[tauri::command]
+async fn open_edit_password(app: tauri::AppHandle, id: i32) {
+    let _window = tauri::WindowBuilder::new(
+        &app,
+        "editpw",
+        tauri::WindowUrl::App(format!("editPw?id={}", id).into()),
+    )
+    .build()
+    .unwrap()
+    .set_title("PassmanTRS - edit password")
+    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+    .ok();
+}
+
+#[tauri::command]
+async fn open_view_password(app: tauri::AppHandle, id: i32) {
+    let _window = tauri::WindowBuilder::new(
+        &app,
+        "viewpw",
+        tauri::WindowUrl::App(format!("viewPw?id={}", id).into()),
+    )
+    .build()
+    .unwrap()
+    .set_title("PassmanTRS - Passworddetails")
+    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+    .ok();
+}
+
+#[tauri::command]
+async fn open_generator(app: tauri::AppHandle) {
+    let _window =
+        tauri::WindowBuilder::new(&app, "generator", tauri::WindowUrl::App("generator".into()))
+            .build()
+            .unwrap()
+            .set_title("PassmanTRS - Password Generator")
+            .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+            .ok();
+}
+
+#[tauri::command]
+fn close_add_password(app: tauri::AppHandle) {
+    app.get_window("addpw").unwrap().close().unwrap();
+    app.emit_all("refresh_passwords", ()).unwrap();
+}
+
+#[tauri::command]
+fn close_edit_password(app: tauri::AppHandle) {
+    app.get_window("editpw").unwrap().close().unwrap();
+    app.emit_all("refresh_passwords", ()).unwrap();
+}
+
+#[tauri::command]
+fn close_view_password(app: tauri::AppHandle) {
+    app.get_window("viewpw").unwrap().close().unwrap();
+}
+
+#[tauri::command]
+fn close_generator(app: tauri::AppHandle) {
+    app.get_window("generator").unwrap().close().unwrap();
 }
 
 fn main() {
