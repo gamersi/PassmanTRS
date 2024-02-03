@@ -539,7 +539,6 @@ fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
 
 #[tauri::command]
 fn generate_password(length: u32, options: GeneratorOptions) -> String {
-    println!("Generating password with length {} and options {:?}", length, options);
     let lowercase_chars: [char; 26] = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
         's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
@@ -585,7 +584,6 @@ fn generate_password(length: u32, options: GeneratorOptions) -> String {
     let mut chars = password.chars().collect::<Vec<_>>();
     chars.shuffle(&mut thread_rng());
     password = chars.into_iter().collect();
-    println!("Generated password: {}", password);
     password
 }
 
