@@ -8,6 +8,7 @@ use aes_gcm::{
 };
 use bcrypt::{hash, verify};
 use ring::pbkdf2;
+use rand::{thread_rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::io::{prelude::*, SeekFrom, Write};
@@ -35,6 +36,14 @@ struct Password {
     url: String,
     notes: String,
     decrypted_password: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GeneratorOptions {
+    min_lowercase: u32,
+    min_uppercase: u32,
+    min_numbers: u32,
+    min_symbols: u32
 }
 
 fn get_os() -> String {
@@ -528,6 +537,58 @@ fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
     true
 }
 
+#[tauri::command]
+fn generate_password(length: u32, options: GeneratorOptions) -> String {
+    println!("Generating password with length {} and options {:?}", length, options);
+    let lowercase_chars: [char; 26] = [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    ];
+
+    let uppercase_chars: [char; 26] = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    ];
+
+    let number_chars: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+    let symbol_chars: [char; 32] = [
+        '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<',
+        '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~'
+    ];
+
+    let mut password = String::with_capacity(length as usize);
+
+    for _ in 0..options.min_lowercase {
+        password.push(*lowercase_chars.choose(&mut thread_rng()).unwrap());
+    }
+    for _ in 0..options.min_uppercase {
+        password.push(*uppercase_chars.choose(&mut thread_rng()).unwrap());
+    }
+    for _ in 0..options.min_numbers {
+        password.push(*number_chars.choose(&mut thread_rng()).unwrap());
+    }
+    for _ in 0..options.min_symbols {
+        password.push(*symbol_chars.choose(&mut thread_rng()).unwrap());
+    }
+
+    for _ in 0..(length - password.len() as u32) {
+        let mut all_chars: Vec<char> = Vec::new();
+        all_chars.extend_from_slice(&lowercase_chars);
+        all_chars.extend_from_slice(&uppercase_chars);
+        all_chars.extend_from_slice(&number_chars);
+        all_chars.extend_from_slice(&symbol_chars);
+        let all_chars = all_chars;
+        password.push(*all_chars.choose(&mut thread_rng()).unwrap());
+    }
+
+    let mut chars = password.chars().collect::<Vec<_>>();
+    chars.shuffle(&mut thread_rng());
+    password = chars.into_iter().collect();
+    println!("Generated password: {}", password);
+    password
+}
+
 fn main() {
     let hide = CustomMenuItem::new("hide".to_string(), "Hide");
     let generator = CustomMenuItem::new("generator".to_string(), "Password Generator");
@@ -609,6 +670,7 @@ fn main() {
             close_generator,
             validate_master_password,
             change_master_password,
+            generate_password
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

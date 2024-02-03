@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { message } from '@tauri-apps/api/dialog';
     import { invoke } from '@tauri-apps/api/tauri'
-	import generatePassword from '../utils/generator';
-	import type { GeneratorOptions } from 'src/utils/types';
 	import { _ } from 'svelte-i18n';
     // @ts-ignore
     import FaCopy from 'svelte-icons/fa/FaCopy.svelte';
@@ -14,39 +12,33 @@
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
     function handleSubmit(event: any) {
-        event.preventDefault()
-        const length = event.target.length.value
-        const minUppercase: number = parseInt(event.target.uppercase.value)
-        const minLowercase: number = parseInt(event.target.lowercase.value)
-        const minNumbers: number = parseInt(event.target.numbers.value)
-        const minSymbols: number = parseInt(event.target.symbols.value)
-        const options: GeneratorOptions = {
-            minUppercase,
-            minLowercase,
-            minNumbers,
-            minSymbols
-        }
+        event.preventDefault();
+        const length: number = parseInt(event.target.length.value);
+        const minUppercase: number = parseInt(event.target.uppercase.value);
+        const minLowercase: number = parseInt(event.target.lowercase.value);
+        const minNumbers: number = parseInt(event.target.numbers.value);
+        const minSymbols: number = parseInt(event.target.symbols.value);
+
         if (minUppercase + minLowercase + minNumbers + minSymbols > length) {
-            message($_('generate.error'))
-            return
+            message($_('generate.error'));
+            return;
         }
-        generatedPassword.set(generatePassword(length, options));
+        invoke("generate_password", { length, options: { min_lowercase: minLowercase, min_uppercase: minUppercase, min_numbers: minNumbers, min_symbols: minSymbols } }).then(res => {
+            generatedPassword.set(res as string);
+        });
     }
 
     function closeWindow() {
         if (!isTauri) {
-            alert($_('settings.nobrowsersupport'))
-            return
+            alert($_('settings.nobrowsersupport'));
+            return;
         }
-        invoke('close_generator')
+        invoke('close_generator');
     }
 
-    generatedPassword.set(generatePassword(10, {
-        minUppercase: 1,
-        minLowercase: 1,
-        minNumbers: 1,
-        minSymbols: 1
-    }))
+    invoke("generate_password", { length: 10, options: { min_lowercase: 1, min_uppercase: 1, min_numbers: 1, min_symbols: 1 } }).then(res => {
+        generatedPassword.set(res as string);
+    });
 
 </script>
 
