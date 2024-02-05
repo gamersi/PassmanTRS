@@ -20,6 +20,7 @@ bcrypt = "0.15.0"
 ring = "0.17.7"
 aes-gcm = "0.10.3"
 rand = "0.8.5"
+chrono = "0.4.33"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

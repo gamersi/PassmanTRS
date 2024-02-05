@@ -11,17 +11,17 @@ use ring::pbkdf2;
 use rand::{thread_rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::io::{prelude::*, SeekFrom, Write};
+use std::{fmt::Debug, io::{prelude::*, SeekFrom, Write}};
 use std::num::NonZeroU32;
 use std::path::Path;
 use tauri::{
-    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem, Size, LogicalSize,
+    CustomMenuItem, LogicalSize, Manager, Size, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem
 };
 
 const PBKDF2_ROUNDS: u32 = 100_000;
 const SALT_LEN: usize = 16;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 struct Block {
     data: Vec<u8>,
     nonce: Vec<u8>,
@@ -95,6 +95,32 @@ fn get_master_password_file_path() -> String {
 
     let mut folder_path = path.clone();
     for _ in "master_password.txt".chars() {
+        folder_path.pop();
+    }
+    if !Path::new(&folder_path).exists() {
+        std::fs::create_dir_all(&folder_path).unwrap();
+    }
+    path
+}
+
+fn get_generator_file_path() -> String {
+    let is_windows = get_os() == "windows";
+    let path = if is_windows {
+        let mut path = Path::new(&std::env::var("APPDATA").unwrap())
+            .to_str()
+            .unwrap()
+            .to_string();
+        path.push_str("\\passmantrs\\generator_history.json");
+        path
+    } else {
+        let mut path = String::new();
+        path.push_str(&std::env::var("HOME").unwrap());
+        path.push_str("/.config/passmantrs/generator_history.json");
+        path
+    };
+
+    let mut folder_path = path.clone();
+    for _ in "generator_history.json".chars() {
         folder_path.pop();
     }
     if !Path::new(&folder_path).exists() {
@@ -193,6 +219,42 @@ fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
     file.write_all(contents_string.as_bytes()).unwrap();
     file.set_len(contents_string.len() as u64).unwrap();
     true
+}
+
+fn add_generated_password_to_history(password: String, master_password: String) {
+    let path = get_generator_file_path();
+
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+
+    let key = derive_key(&master_password, &salt);
+
+    let encrypted_password = encrypt(&password.trim().as_bytes().to_vec(), &key);
+
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    let mut passwords: Vec<(Block, String)> = if contents.is_empty() {
+        vec![]
+    } else {
+        serde_json::from_str(&contents).unwrap()
+    };
+
+    let date = chrono::Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+
+    passwords.push((encrypted_password, date));
+
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
 }
 
 #[tauri::command]
@@ -467,7 +529,7 @@ fn change_master_password(old_pw: String, new_pw: String) -> bool {
 }
 
 #[tauri::command]
-fn generate_password(length: u32, options: GeneratorOptions) -> String {
+async fn generate_password(length: u32, options: GeneratorOptions, master_password: String) -> String {
     let lowercase_chars: [char; 26] = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
         's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
@@ -513,7 +575,104 @@ fn generate_password(length: u32, options: GeneratorOptions) -> String {
     let mut chars = password.chars().collect::<Vec<_>>();
     chars.shuffle(&mut thread_rng());
     password = chars.into_iter().collect();
+
+    if master_password.len() > 0 {
+        add_generated_password_to_history(password.clone(), master_password);
+    } else {
+        println!("Master password is empty, not adding password to history");
+    }
+
     password
+}
+
+#[tauri::command]
+async fn get_generator_history(master_password: String) -> Result<Vec<(String, String)>, String> {
+    let path = get_generator_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.len() == 0 {
+        contents.push_str("[]");
+        file.write_fmt(format_args!("{}", contents)).unwrap();
+    }
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+
+    let contents_json: Vec<(Block, String)> = serde_json::from_str(&contents).unwrap();
+
+    let mut passwords: Vec<(String, String)> = Vec::new();
+    for (password, date) in contents_json.iter() {
+        let decrypted_password = decrypt(password.clone(), &key);
+        passwords.push((String::from_utf8(decrypted_password).unwrap(), date.to_string()));
+    }
+    
+    Ok(passwords)
+}
+
+#[tauri::command]
+async fn delete_generator_history(password: String, master_password: String) {
+    let path = get_generator_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    let mut passwords: Vec<(Block, String)> = if contents.is_empty() {
+        vec![]
+    } else {
+        serde_json::from_str(&contents).unwrap()
+    };
+
+    if master_password.len() == 0 {
+        println!("Master password is empty, not removing password from history");
+        return;
+    }
+
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+
+    for (i, (password_block, _)) in passwords.iter_mut().enumerate() {
+        let decrypted_password = decrypt(password_block.clone(), &key);
+        if password == String::from_utf8(decrypted_password).unwrap() {
+            passwords.remove(i);
+            break;
+        }
+    }
+
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+}
+
+#[tauri::command]
+async fn clear_generator_history() {
+    let path = get_generator_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let passwords: Vec<(Block, String)> = vec![];
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
 }
 
 #[tauri::command]
@@ -668,7 +827,10 @@ fn main() {
             close_generator,
             validate_master_password,
             change_master_password,
-            generate_password
+            generate_password,
+            get_generator_history,
+            delete_generator_history,
+            clear_generator_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
