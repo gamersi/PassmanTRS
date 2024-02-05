@@ -1,5 +1,5 @@
 # PassmanTRS
-## PassmanTRS is a password manager that uses [Tauri](https://tauri.app/) and [Rust](https://www.rust-lang.org/). It is currently in development and not ready for use.
+## PassmanTRS is a password manager that uses [Tauri](https://tauri.app/) and [Rust](https://www.rust-lang.org/). It is currently in development and I don't recommend depending on it.
 ## Features
 - [x] Available for Windows, Linux and Mac
 - [x] Available in English and German
@@ -14,13 +14,12 @@
 - [x] settings
 - [x] master password change
 - [x] password generation
-
+- [x] password generation history
 
 ## Upcoming Features
 - [ ] password strength meter
 - [ ] password sharing
 - [ ] password expiration
-- [ ] password generation history
 - [ ] password import/export
 - [ ] easy vault backup
 - [ ] search
@@ -38,7 +37,9 @@
 
 
 ## News
-- ⌈ 08.01.2024: [v0.1.2 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.2) (the multilingual release)
+- ⌈ 05.02.2024: [v0.1.4 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.4)
+- | 21.01.2024: [v0.1.3 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.3)
+- | 08.01.2024: [v0.1.2 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.2) (the multilingual release)
 - | 07.01.2024: [v0.1.1 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.1)
 - | 01.01.2024: [v0.1.0 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.0)
 - | December 2023: Development resumed

@@ -212,12 +212,13 @@
 		border-radius: 10px;
 		padding: 10px;
 		margin: 10px;
+		background-color: var(--card-background-color);
 		box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 		transition: all 0.25s;
 	}
 
 	.card:hover {
-		box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 	}
 
 	.title {

@@ -8,19 +8,20 @@ use aes_gcm::{
 };
 use bcrypt::{hash, verify};
 use ring::pbkdf2;
+use rand::{thread_rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::io::{prelude::*, SeekFrom, Write};
+use std::{fmt::Debug, io::{prelude::*, SeekFrom, Write}};
 use std::num::NonZeroU32;
 use std::path::Path;
 use tauri::{
-    CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem, Size, LogicalSize,
+    CustomMenuItem, LogicalSize, Manager, Size, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem
 };
 
 const PBKDF2_ROUNDS: u32 = 100_000;
 const SALT_LEN: usize = 16;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 struct Block {
     data: Vec<u8>,
     nonce: Vec<u8>,
@@ -35,6 +36,14 @@ struct Password {
     url: String,
     notes: String,
     decrypted_password: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GeneratorOptions {
+    min_lowercase: u32,
+    min_uppercase: u32,
+    min_numbers: u32,
+    min_symbols: u32
 }
 
 fn get_os() -> String {
@@ -94,6 +103,32 @@ fn get_master_password_file_path() -> String {
     path
 }
 
+fn get_generator_file_path() -> String {
+    let is_windows = get_os() == "windows";
+    let path = if is_windows {
+        let mut path = Path::new(&std::env::var("APPDATA").unwrap())
+            .to_str()
+            .unwrap()
+            .to_string();
+        path.push_str("\\passmantrs\\generator_history.json");
+        path
+    } else {
+        let mut path = String::new();
+        path.push_str(&std::env::var("HOME").unwrap());
+        path.push_str("/.config/passmantrs/generator_history.json");
+        path
+    };
+
+    let mut folder_path = path.clone();
+    for _ in "generator_history.json".chars() {
+        folder_path.pop();
+    }
+    if !Path::new(&folder_path).exists() {
+        std::fs::create_dir_all(&folder_path).unwrap();
+    }
+    path
+}
+
 fn derive_key(password: &str, salt: &[u8]) -> [u8; 32] {
     let mut key = [0u8; 32];
     pbkdf2::derive(
@@ -104,6 +139,122 @@ fn derive_key(password: &str, salt: &[u8]) -> [u8; 32] {
         &mut key,
     );
     key
+}
+
+fn encrypt(data: &[u8], key_byte: &[u8]) -> Block {
+    let key: &Key<Aes256Gcm> = key_byte.into();
+    let cipher = Aes256Gcm::new(&key);
+
+    let nonce = Aes256Gcm::generate_nonce(OsRng);
+
+    let encrypted_data = match cipher.encrypt(&nonce, data) {
+        Ok(encrpted) => {
+            let e = Block {
+                data: encrpted,
+                nonce: nonce.to_vec(),
+            };
+
+            e
+        }
+        Err(err) => {
+            panic!("Could not encrypt data: {:?}", err);
+        }
+    };
+    encrypted_data
+}
+
+fn decrypt(encrypted_data: Block, password_byte: &[u8]) -> Vec<u8> {
+    let key: &Key<Aes256Gcm> = password_byte.into();
+    let nonce = encrypted_data.nonce;
+    let data = encrypted_data.data;
+
+    let cipher = Aes256Gcm::new(&key);
+    let op = cipher
+        .decrypt(GenericArray::from_slice(&nonce), data.as_slice())
+        .expect("decryption failure!");
+    op
+}
+
+fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
+    let path = get_passwords_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path.clone())
+        .unwrap();
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    if contents.len() == 0 {
+        contents.push_str("[]");
+        file.write_fmt(format_args!("{}", contents)).unwrap();
+    }
+
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let old_key = derive_key(&old_master_pw, &salt);
+    let new_key = derive_key(&new_master_pw, &salt);
+
+    let mut contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
+
+    let mut passwords: Vec<Password> = Vec::new();
+    for password in contents_json.iter_mut() {
+        let encrypted_password = password.password.clone();
+        let decrypted_password = decrypt(encrypted_password.clone(), &old_key);
+        let encrypted_password = encrypt(&decrypted_password, &new_key);
+        passwords.push(Password {
+            id: password.id,
+            name: password.name.to_string(),
+            username: password.username.to_string(),
+            password: encrypted_password,
+            url: password.url.to_string(),
+            notes: password.notes.to_string(),
+            decrypted_password: None,
+        });
+    }
+
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+    true
+}
+
+fn add_generated_password_to_history(password: String, master_password: String) {
+    let path = get_generator_file_path();
+
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+
+    let key = derive_key(&master_password, &salt);
+
+    let encrypted_password = encrypt(&password.trim().as_bytes().to_vec(), &key);
+
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    let mut passwords: Vec<(Block, String)> = if contents.is_empty() {
+        vec![]
+    } else {
+        serde_json::from_str(&contents).unwrap()
+    };
+
+    let date = chrono::Local::now().format("%d.%m.%Y %H:%M:%S").to_string();
+
+    passwords.push((encrypted_password, date));
+
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
 }
 
 #[tauri::command]
@@ -230,55 +381,6 @@ fn edit_password(
 }
 
 #[tauri::command]
-async fn open_add_password(app: tauri::AppHandle) {
-    let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
-        .build()
-        .unwrap()
-        .set_title("PassmanTRS - add password")
-        .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-        .ok();
-}
-
-#[tauri::command]
-async fn open_edit_password(app: tauri::AppHandle, id: i32) {
-    let _window = tauri::WindowBuilder::new(
-        &app,
-        "editpw",
-        tauri::WindowUrl::App(format!("editPw?id={}", id).into()),
-    )
-    .build()
-    .unwrap()
-    .set_title("PassmanTRS - edit password")
-    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-    .ok();
-}
-
-#[tauri::command]
-async fn open_view_password(app: tauri::AppHandle, id: i32) {
-    let _window = tauri::WindowBuilder::new(
-        &app,
-        "viewpw",
-        tauri::WindowUrl::App(format!("viewPw?id={}", id).into()),
-    )
-    .build()
-    .unwrap()
-    .set_title("PassmanTRS - Passworddetails")
-    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-    .ok();
-}
-
-#[tauri::command]
-async fn open_generator(app: tauri::AppHandle) {
-    let _window =
-        tauri::WindowBuilder::new(&app, "generator", tauri::WindowUrl::App("generator".into()))
-            .build()
-            .unwrap()
-            .set_title("PassmanTRS - Password Generator")
-            .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
-            .ok();
-}
-
-#[tauri::command]
 fn add_password(
     name: String,
     username: String,
@@ -357,28 +459,6 @@ fn delete_password(id: i32) {
 }
 
 #[tauri::command]
-fn close_add_password(app: tauri::AppHandle) {
-    app.get_window("addpw").unwrap().close().unwrap();
-    app.emit_all("refresh_passwords", ()).unwrap();
-}
-
-#[tauri::command]
-fn close_edit_password(app: tauri::AppHandle) {
-    app.get_window("editpw").unwrap().close().unwrap();
-    app.emit_all("refresh_passwords", ()).unwrap();
-}
-
-#[tauri::command]
-fn close_view_password(app: tauri::AppHandle) {
-    app.get_window("viewpw").unwrap().close().unwrap();
-}
-
-#[tauri::command]
-fn close_generator(app: tauri::AppHandle) {
-    app.get_window("generator").unwrap().close().unwrap();
-}
-
-#[tauri::command]
 fn delete_passwords() {
     let path = get_passwords_file_path();
     let mut file = std::fs::OpenOptions::new()
@@ -421,40 +501,6 @@ fn validate_master_password(password: String) -> bool {
     }
 }
 
-fn encrypt(data: &[u8], key_byte: &[u8]) -> Block {
-    let key: &Key<Aes256Gcm> = key_byte.into();
-    let cipher = Aes256Gcm::new(&key);
-
-    let nonce = Aes256Gcm::generate_nonce(OsRng);
-
-    let encrypted_data = match cipher.encrypt(&nonce, data) {
-        Ok(encrpted) => {
-            let e = Block {
-                data: encrpted,
-                nonce: nonce.to_vec(),
-            };
-
-            e
-        }
-        Err(err) => {
-            panic!("Could not encrypt data: {:?}", err);
-        }
-    };
-    encrypted_data
-}
-
-fn decrypt(encrypted_data: Block, password_byte: &[u8]) -> Vec<u8> {
-    let key: &Key<Aes256Gcm> = password_byte.into();
-    let nonce = encrypted_data.nonce;
-    let data = encrypted_data.data;
-
-    let cipher = Aes256Gcm::new(&key);
-    let op = cipher
-        .decrypt(GenericArray::from_slice(&nonce), data.as_slice())
-        .expect("decryption failure!");
-    op
-}
-
 #[tauri::command]
 fn change_master_password(old_pw: String, new_pw: String) -> bool {
     let mpw_path = get_master_password_file_path();
@@ -482,13 +528,71 @@ fn change_master_password(old_pw: String, new_pw: String) -> bool {
     migrate_passwords(old_pw, new_pw)
 }
 
-fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
-    let path = get_passwords_file_path();
+#[tauri::command]
+async fn generate_password(length: u32, options: GeneratorOptions, master_password: String) -> String {
+    let lowercase_chars: [char; 26] = [
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    ];
+
+    let uppercase_chars: [char; 26] = [
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    ];
+
+    let number_chars: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+    let symbol_chars: [char; 32] = [
+        '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<',
+        '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~'
+    ];
+
+    let mut password = String::with_capacity(length as usize);
+
+    for _ in 0..options.min_lowercase {
+        password.push(*lowercase_chars.choose(&mut thread_rng()).unwrap());
+    }
+    for _ in 0..options.min_uppercase {
+        password.push(*uppercase_chars.choose(&mut thread_rng()).unwrap());
+    }
+    for _ in 0..options.min_numbers {
+        password.push(*number_chars.choose(&mut thread_rng()).unwrap());
+    }
+    for _ in 0..options.min_symbols {
+        password.push(*symbol_chars.choose(&mut thread_rng()).unwrap());
+    }
+
+    for _ in 0..(length - password.len() as u32) {
+        let mut all_chars: Vec<char> = Vec::new();
+        all_chars.extend_from_slice(&lowercase_chars);
+        all_chars.extend_from_slice(&uppercase_chars);
+        all_chars.extend_from_slice(&number_chars);
+        all_chars.extend_from_slice(&symbol_chars);
+        let all_chars = all_chars;
+        password.push(*all_chars.choose(&mut thread_rng()).unwrap());
+    }
+
+    let mut chars = password.chars().collect::<Vec<_>>();
+    chars.shuffle(&mut thread_rng());
+    password = chars.into_iter().collect();
+
+    if master_password.len() > 0 {
+        add_generated_password_to_history(password.clone(), master_password);
+    } else {
+        println!("Master password is empty, not adding password to history");
+    }
+
+    password
+}
+
+#[tauri::command]
+async fn get_generator_history(master_password: String) -> Result<Vec<(String, String)>, String> {
+    let path = get_generator_file_path();
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .create(true)
         .write(true)
-        .open(path.clone())
+        .open(path)
         .unwrap();
     let mut contents = String::new();
     std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
@@ -496,27 +600,53 @@ fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
         contents.push_str("[]");
         file.write_fmt(format_args!("{}", contents)).unwrap();
     }
+    
+    let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
+    let key = derive_key(&master_password, &salt);
+
+    let contents_json: Vec<(Block, String)> = serde_json::from_str(&contents).unwrap();
+
+    let mut passwords: Vec<(String, String)> = Vec::new();
+    for (password, date) in contents_json.iter() {
+        let decrypted_password = decrypt(password.clone(), &key);
+        passwords.push((String::from_utf8(decrypted_password).unwrap(), date.to_string()));
+    }
+    
+    Ok(passwords)
+}
+
+#[tauri::command]
+async fn delete_generator_history(password: String, master_password: String) {
+    let path = get_generator_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+
+    let mut contents = String::new();
+    std::io::Read::read_to_string(&mut file, &mut contents).unwrap();
+    let mut passwords: Vec<(Block, String)> = if contents.is_empty() {
+        vec![]
+    } else {
+        serde_json::from_str(&contents).unwrap()
+    };
+
+    if master_password.len() == 0 {
+        println!("Master password is empty, not removing password from history");
+        return;
+    }
 
     let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
-    let old_key = derive_key(&old_master_pw, &salt);
-    let new_key = derive_key(&new_master_pw, &salt);
+    let key = derive_key(&master_password, &salt);
 
-    let mut contents_json: Vec<Password> = serde_json::from_str(&contents).unwrap();
-
-    let mut passwords: Vec<Password> = Vec::new();
-    for password in contents_json.iter_mut() {
-        let encrypted_password = password.password.clone();
-        let decrypted_password = decrypt(encrypted_password.clone(), &old_key);
-        let encrypted_password = encrypt(&decrypted_password, &new_key);
-        passwords.push(Password {
-            id: password.id,
-            name: password.name.to_string(),
-            username: password.username.to_string(),
-            password: encrypted_password,
-            url: password.url.to_string(),
-            notes: password.notes.to_string(),
-            decrypted_password: None,
-        });
+    for (i, (password_block, _)) in passwords.iter_mut().enumerate() {
+        let decrypted_password = decrypt(password_block.clone(), &key);
+        if password == String::from_utf8(decrypted_password).unwrap() {
+            passwords.remove(i);
+            break;
+        }
     }
 
     let contents_string = serde_json::to_string(&passwords).unwrap();
@@ -525,7 +655,95 @@ fn migrate_passwords(old_master_pw: String, new_master_pw: String) -> bool {
 
     file.write_all(contents_string.as_bytes()).unwrap();
     file.set_len(contents_string.len() as u64).unwrap();
-    true
+}
+
+#[tauri::command]
+async fn clear_generator_history() {
+    let path = get_generator_file_path();
+    let mut file = std::fs::OpenOptions::new()
+        .read(true)
+        .create(true)
+        .write(true)
+        .open(path)
+        .unwrap();
+    let passwords: Vec<(Block, String)> = vec![];
+    let contents_string = serde_json::to_string(&passwords).unwrap();
+
+    file.seek(SeekFrom::Start(0)).unwrap();
+
+    file.write_all(contents_string.as_bytes()).unwrap();
+    file.set_len(contents_string.len() as u64).unwrap();
+}
+
+#[tauri::command]
+async fn open_add_password(app: tauri::AppHandle) {
+    let _window = tauri::WindowBuilder::new(&app, "addpw", tauri::WindowUrl::App("addPw".into()))
+        .build()
+        .unwrap()
+        .set_title("PassmanTRS - add password")
+        .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+        .ok();
+}
+
+#[tauri::command]
+async fn open_edit_password(app: tauri::AppHandle, id: i32) {
+    let _window = tauri::WindowBuilder::new(
+        &app,
+        "editpw",
+        tauri::WindowUrl::App(format!("editPw?id={}", id).into()),
+    )
+    .build()
+    .unwrap()
+    .set_title("PassmanTRS - edit password")
+    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+    .ok();
+}
+
+#[tauri::command]
+async fn open_view_password(app: tauri::AppHandle, id: i32) {
+    let _window = tauri::WindowBuilder::new(
+        &app,
+        "viewpw",
+        tauri::WindowUrl::App(format!("viewPw?id={}", id).into()),
+    )
+    .build()
+    .unwrap()
+    .set_title("PassmanTRS - Passworddetails")
+    .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+    .ok();
+}
+
+#[tauri::command]
+async fn open_generator(app: tauri::AppHandle) {
+    let _window =
+        tauri::WindowBuilder::new(&app, "generator", tauri::WindowUrl::App("generator".into()))
+            .build()
+            .unwrap()
+            .set_title("PassmanTRS - Password Generator")
+            .map_err(|err| println!("{:?}", err)) // print error if the window fails to be created. Rust error handling 😍
+            .ok();
+}
+
+#[tauri::command]
+fn close_add_password(app: tauri::AppHandle) {
+    app.get_window("addpw").unwrap().close().unwrap();
+    app.emit_all("refresh_passwords", ()).unwrap();
+}
+
+#[tauri::command]
+fn close_edit_password(app: tauri::AppHandle) {
+    app.get_window("editpw").unwrap().close().unwrap();
+    app.emit_all("refresh_passwords", ()).unwrap();
+}
+
+#[tauri::command]
+fn close_view_password(app: tauri::AppHandle) {
+    app.get_window("viewpw").unwrap().close().unwrap();
+}
+
+#[tauri::command]
+fn close_generator(app: tauri::AppHandle) {
+    app.get_window("generator").unwrap().close().unwrap();
 }
 
 fn main() {
@@ -609,6 +827,10 @@ fn main() {
             close_generator,
             validate_master_password,
             change_master_password,
+            generate_password,
+            get_generator_history,
+            delete_generator_history,
+            clear_generator_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

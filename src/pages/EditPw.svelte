@@ -1,7 +1,7 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri';
 	import type { Password, Block } from '../utils/types';
-    import { parseURL } from '../utils/utillities';
+    import { parseURL } from '../utils/utilities';
     import { _ } from 'svelte-i18n';
 
     // @ts-ignore

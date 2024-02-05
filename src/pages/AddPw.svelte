@@ -1,6 +1,6 @@
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/tauri'
-	import { parseURL } from '../utils/utillities';
+	import { parseURL } from '../utils/utilities';
     import { _ } from 'svelte-i18n';
     // @ts-ignore
     import MdRefresh from 'svelte-icons/md/MdRefresh.svelte';

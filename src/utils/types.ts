@@ -12,10 +12,3 @@ export type Password = {
     notes: string,
     decrypted_password?: string
 }
-
-export type GeneratorOptions = {
-    minLowercase: number;
-    minUppercase: number;
-    minNumbers: number;
-    minSymbols: number;
-};

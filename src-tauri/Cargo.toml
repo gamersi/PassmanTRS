@@ -1,6 +1,6 @@
 [package]
 name = "passwordmanager"
-version = "0.1.3"
+version = "0.1.4"
 description = "Password Manager made with Rust and Tauri"
 authors = ["gamersi"]
 license = ""
@@ -16,11 +16,20 @@ tauri-build = { version = "1.3", features = [] }
 tauri = { version = "1.3", features = [ "system-tray", "dialog-all", "shell-open"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-bcrypt = "0.14.0"
+bcrypt = "0.15.0"
 ring = "0.17.7"
 aes-gcm = "0.10.3"
+rand = "0.8.5"
+chrono = "0.4.33"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1 
+lto = true
+opt-level = "z"
+strip = true
