@@ -89,7 +89,7 @@
 
 <main class="container">
 	<div class="row">
-		<h1>{$_("start.title")}</h1>
+		<h1 class="page-title">{$_("start.title")}</h1>
 		<div class="btn-group">
 			<button class="btn btn-icon btn-primary" on:click={() => {
 				isSettingsOpen.set(true);
@@ -209,11 +209,11 @@
 		align-items: center;
 		width: calc(100% - 40px);
 		height: 100%;
-		border-radius: 10px;
+		border-radius: 5px;
 		padding: 10px;
 		margin: 10px;
 		background-color: var(--card-background-color);
-		box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+		border: 0.46px solid var(--card-border-color);
 		transition: all 0.25s;
 	}
 
