@@ -37,7 +37,8 @@
 
 
 ## News
-- ⌈ 05.02.2024: [v0.1.4 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.4)
+- ⌈ 11.04.2024: [v0.1.5 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.5)
+- | 05.02.2024: [v0.1.4 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.4)
 - | 21.01.2024: [v0.1.3 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.3)
 - | 08.01.2024: [v0.1.2 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.2) (the multilingual release)
 - | 07.01.2024: [v0.1.1 released](https://github.com/gamersi/PassmanTRS/releases/tag/app-v0.1.1)
