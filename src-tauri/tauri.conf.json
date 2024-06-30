@@ -1,14 +1,14 @@
 {
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "pnpm run dev",
+    "beforeBuildCommand": "pnpm run build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false
   },
   "package": {
     "productName": "PassmanTRS",
-    "version": "0.1.5"
+    "version": "0.1.6"
   },
   "tauri": {
     "systemTray": {

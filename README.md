@@ -15,14 +15,14 @@
 - [x] master password change
 - [x] password generation
 - [x] password generation history
+- [x] search
+- [x] password strength meter
 
 ## Upcoming Features
-- [ ] password strength meter
 - [ ] password sharing
 - [ ] password expiration
 - [ ] password import/export
 - [ ] easy vault backup
-- [ ] search
 
 ## Screenshots
 ![screenshot1](images/screenshot1.png)
@@ -92,5 +92,5 @@ If you want to translate the application into your language, you can do so by fo
 4. Translate the strings in the file.
 5. You can add your translation by declaring it in `src/locales/i18n.ts`: add the language code to the `availableLanguages` array and add the import statement as well as the addMessages statement with the language code and the imported file.
 6. Add your language and github username to the list above.
-7. Open a pull request.  
+7. Open a pull request.
 You can also open an issue or contact me on Discord (gamersi) if you need help with the translation.

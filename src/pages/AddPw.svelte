@@ -1,39 +1,42 @@
 <script lang="ts">
-    import { invoke } from '@tauri-apps/api/tauri'
-	import { parseURL } from '../utils/utilities';
-    import { _ } from 'svelte-i18n';
+    import { invoke } from "@tauri-apps/api/tauri";
+    import { parseURL } from "../utils/utilities";
+    import { _ } from "svelte-i18n";
     // @ts-ignore
-    import MdRefresh from 'svelte-icons/md/MdRefresh.svelte';
+    import MdRefresh from "svelte-icons/md/MdRefresh.svelte";
+    import PasswordStrengthMeter from "../components/PasswordStrengthMeter.svelte";
+    import { passwordStrength } from "../utils/utilities";
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
-    const masterPassword = localStorage.getItem('masterPassword')
-    
+    const masterPassword = localStorage.getItem("masterPassword");
+    let password = "";
+
     function addPassword(event: any) {
         if (!isTauri) {
-            alert($_("settings.nobrowsersupport"))
-            return
+            alert($_("settings.nobrowsersupport"));
+            return;
         }
-        invoke('add_password', {
+        invoke("add_password", {
             name: event.target.name.value,
             username: event.target.username.value,
             password: event.target.password.value,
             url: parseURL(event.target.url.value),
             notes: event.target.notes.value,
-            masterPassword
+            masterPassword,
         }).then((res: any) => {
-            console.log(res)
-            invoke('close_add_password')
-        })
+            console.log(res);
+            invoke("close_add_password");
+        });
     }
 
     function closeWindow() {
         if (!isTauri) {
-            alert($_("settings.nobrowsersupport"))
-            return
+            alert($_("settings.nobrowsersupport"));
+            return;
         }
-        invoke('close_add_password')
+        invoke("close_add_password");
     }
 </script>
 
@@ -42,27 +45,66 @@
     <form on:submit|preventDefault={addPassword}>
         <div class="row">
             <label for="name" class="form-label">{$_("addpw.name")}</label>
-            <input type="text" class="form-control" id="name" placeholder={$_("addpw.name")}>
+            <input
+                type="text"
+                class="form-control"
+                id="name"
+                placeholder={$_("addpw.name")}
+            />
         </div>
         <div class="row">
-            <label for="username" class="form-label">{$_("addpw.username")}</label>
-            <input type="text" class="form-control" id="username" placeholder={$_("addpw.username")}>
+            <label for="username" class="form-label"
+                >{$_("addpw.username")}</label
+            >
+            <input
+                type="text"
+                class="form-control"
+                id="username"
+                placeholder={$_("addpw.username")}
+            />
         </div>
         <div class="row">
-            <label for="password" class="form-label">{$_("addpw.password")}</label>
-            <input type="text" class="form-control" id="password" placeholder={$_("addpw.password")}>
-            <button type="button" class="btn btn-icon" on:click={() => invoke('open_generator')}><MdRefresh /></button>
+            <label for="password" class="form-label"
+                >{$_("addpw.password")}</label
+            >
+            <input
+                type="text"
+                class="form-control"
+                id="password"
+                placeholder={$_("addpw.password")}
+                bind:value={password}
+            />
+            <button
+                type="button"
+                class="btn btn-icon"
+                on:click={() => invoke("open_generator")}><MdRefresh /></button
+            >
+            <PasswordStrengthMeter
+                passwordStrength={passwordStrength(password)}
+            />
         </div>
         <div class="row">
             <label for="url" class="form-label">{$_("addpw.url")}</label>
-            <input type="text" class="form-control" id="url" placeholder={$_("addpw.url")}>
+            <input
+                type="text"
+                class="form-control"
+                id="url"
+                placeholder={$_("addpw.url")}
+            />
         </div>
         <div class="row">
             <label for="notes" class="form-label">{$_("addpw.notes")}</label>
-            <input type="text" class="form-control" id="notes" placeholder={$_("addpw.notes")}>
+            <input
+                type="text"
+                class="form-control"
+                id="notes"
+                placeholder={$_("addpw.notes")}
+            />
         </div>
         <button type="submit" class="btn btn-primary">{$_("addpw.add")}</button>
-        <button type="button" class="btn" on:click={closeWindow}>{$_("settings.cancel")}</button>
+        <button type="button" class="btn" on:click={closeWindow}
+            >{$_("settings.cancel")}</button
+        >
     </form>
 </main>
 
@@ -75,7 +117,7 @@
         width: 100%;
         margin-top: 20px;
     }
-    
+
     .row {
         display: flex;
         justify-content: space-between;
