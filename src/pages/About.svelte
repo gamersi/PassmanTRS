@@ -7,7 +7,10 @@
     <h1>PassmanTRS</h1>
     <p>Version {version}</p>
     <p>Built on {buildTime}</p>
-    <p>PassmanTRS is a password manager written in Rust(Tauri), TypeScript and Svelte.</p>
+    <p>
+        PassmanTRS is a password manager written in Rust(Tauri), TypeScript and
+        Svelte.
+    </p>
     <p>&copy; 2023-2024 gamersi (Simon R.) &amp; contributors</p>
 </main>
 

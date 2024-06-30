@@ -1,79 +1,79 @@
 {
-    "masterpassword": {
-        "base": "Masterpasswort",
-        "enter": "Bitte Masterpasswort eingeben",
-        "wrong": "Falsches Masterpasswort",
-        "old": "Altes Masterpasswort",
-        "new": "Neues Masterpasswort",
-        "repeatnew": "Neues Masterpasswort wiederholen",
-        "verifying": "Login wird verifiziert...",
-        "match": "Die Passwörter stimmen nicht überein",
-        "success": "Masterpasswort erfolgreich geändert",
-        "wrongold": "Falsches altes Masterpasswort"
+  "masterpassword": {
+    "base": "Masterpasswort",
+    "enter": "Bitte Masterpasswort eingeben",
+    "wrong": "Falsches Masterpasswort",
+    "old": "Altes Masterpasswort",
+    "new": "Neues Masterpasswort",
+    "repeatnew": "Neues Masterpasswort wiederholen",
+    "verifying": "Login wird verifiziert...",
+    "match": "Die Passwörter stimmen nicht überein",
+    "success": "Masterpasswort erfolgreich geändert",
+    "wrongold": "Falsches altes Masterpasswort"
+  },
+  "tips": {
+    "theme": "Tipp: Du kannst Strg + T drücken, um das Theme zu wechseln.",
+    "settings": "Tipp: Du kannst Strg + S drücken, um die Einstellungen zu öffnen. (Nur nach Eingabe des Masterpassworts)"
+  },
+  "settings": {
+    "base": "Einstellungen",
+    "language": "Sprache",
+    "change": {
+      "base": "Ändern",
+      "masterpassword": "Masterpasswort ändern",
+      "theme": "Theme ändern"
     },
-    "tips": {
-        "theme": "Tipp: Du kannst Strg + T drücken, um das Theme zu wechseln.",
-        "settings": "Tipp: Du kannst Strg + S drücken, um die Einstellungen zu öffnen. (Nur nach Eingabe des Masterpassworts)"
-    },
-    "settings": {
-        "base": "Einstellungen",
-        "language": "Sprache",
-        "change": {
-            "base": "Ändern",
-            "masterpassword": "Masterpasswort ändern",
-            "theme": "Theme ändern"
-        },
-        "save": "Speichern",
-        "close": "Schließen",
-        "cancel": "Abbrechen",
-        "login": "Login",
-        "nobrowsersupport": "Dieser Button funktioniert nur in der Tauri App"
-    },
-    "start": {
-        "title": "Passwörter",
-        "placeholder": {
-            "name": "Kein Name",
-            "username": "Kein Benutzername",
-            "copy": "Kopieren wird nicht unterstützt",
-            "encrypted": "Dieses Passwort konnte nicht entschlüsselt werden",
-            "nopasswords": "Keine Passwörter vorhanden"
-        }
-    },
-    "addpw": {
-        "base": "Passwort hinzufügen",
-        "name": "Name",
-        "username": "Benutzername",
-        "password": "Passwort",
-        "url": "URL",
-        "notes": "Notizen",
-        "add": "Hinzufügen"
-    },
-    "editpw": {
-        "base": "Passwort bearbeiten",
-        "name": "Name",
-        "username": "Benutzername",
-        "password": "Passwort",
-        "url": "URL",
-        "notes": "Notizen",
-        "save": "Speichern",
-        "noid": "Keine ID vorhanden"
-    },
-    "viewpw": {
-        "base": "Passwort ansehen",
-        "name": "Name",
-        "username": "Benutzername",
-        "password": "Passwort",
-        "url": "URL",
-        "notes": "Notizen"
-    },
-    "generate": {
-        "base": "Passwort generieren",
-        "length": "Länge",
-        "uppercase": "Großbuchstaben",
-        "lowercase": "Kleinbuchstaben",
-        "numbers": "Zahlen",
-        "symbols": "Symbole",
-        "generate": "Generieren",
-        "error": "Die Länge muss größer sein, als alle Minima zusammen"
+    "save": "Speichern",
+    "close": "Schließen",
+    "cancel": "Abbrechen",
+    "login": "Login",
+    "nobrowsersupport": "Dieser Button funktioniert nur in der Tauri App"
+  },
+  "start": {
+    "title": "Passwörter",
+    "placeholder": {
+      "name": "Kein Name",
+      "username": "Kein Benutzername",
+      "copy": "Kopieren wird nicht unterstützt",
+      "encrypted": "Dieses Passwort konnte nicht entschlüsselt werden",
+      "nopasswords": "Keine Passwörter vorhanden"
     }
+  },
+  "addpw": {
+    "base": "Passwort hinzufügen",
+    "name": "Name",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "url": "URL",
+    "notes": "Notizen",
+    "add": "Hinzufügen"
+  },
+  "editpw": {
+    "base": "Passwort bearbeiten",
+    "name": "Name",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "url": "URL",
+    "notes": "Notizen",
+    "save": "Speichern",
+    "noid": "Keine ID vorhanden"
+  },
+  "viewpw": {
+    "base": "Passwort ansehen",
+    "name": "Name",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "url": "URL",
+    "notes": "Notizen"
+  },
+  "generate": {
+    "base": "Passwort generieren",
+    "length": "Länge",
+    "uppercase": "Großbuchstaben",
+    "lowercase": "Kleinbuchstaben",
+    "numbers": "Zahlen",
+    "symbols": "Symbole",
+    "generate": "Generieren",
+    "error": "Die Länge muss größer sein, als alle Minima zusammen"
+  }
 }

@@ -7,15 +7,19 @@ use aes_gcm::{
     AeadCore, Aes256Gcm, Key, KeyInit,
 };
 use bcrypt::{hash, verify};
+use rand::{seq::SliceRandom, thread_rng};
 use ring::pbkdf2;
-use rand::{thread_rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{fmt::Debug, io::{prelude::*, SeekFrom, Write}};
 use std::num::NonZeroU32;
 use std::path::Path;
+use std::{
+    fmt::Debug,
+    io::{prelude::*, SeekFrom, Write},
+};
 use tauri::{
-    CustomMenuItem, LogicalSize, Manager, Size, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem
+    CustomMenuItem, LogicalSize, Manager, Size, SystemTray, SystemTrayEvent, SystemTrayMenu,
+    SystemTrayMenuItem,
 };
 
 const PBKDF2_ROUNDS: u32 = 100_000;
@@ -43,7 +47,7 @@ struct GeneratorOptions {
     min_lowercase: u32,
     min_uppercase: u32,
     min_numbers: u32,
-    min_symbols: u32
+    min_symbols: u32,
 }
 
 fn get_os() -> String {
@@ -529,22 +533,26 @@ fn change_master_password(old_pw: String, new_pw: String) -> bool {
 }
 
 #[tauri::command]
-async fn generate_password(length: u32, options: GeneratorOptions, master_password: String) -> String {
+async fn generate_password(
+    length: u32,
+    options: GeneratorOptions,
+    master_password: String,
+) -> String {
     let lowercase_chars: [char; 26] = [
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-        's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     ];
 
     let uppercase_chars: [char; 26] = [
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
-        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     ];
 
     let number_chars: [char; 10] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
     let symbol_chars: [char; 32] = [
         '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', ':', ';', '<',
-        '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~'
+        '=', '>', '?', '@', '[', '\\', ']', '^', '_', '`', '{', '|', '}', '~',
     ];
 
     let mut password = String::with_capacity(length as usize);
@@ -600,7 +608,7 @@ async fn get_generator_history(master_password: String) -> Result<Vec<(String, S
         contents.push_str("[]");
         file.write_fmt(format_args!("{}", contents)).unwrap();
     }
-    
+
     let salt: [u8; SALT_LEN] = [0; SALT_LEN]; // constant salt should be enough for now
     let key = derive_key(&master_password, &salt);
 
@@ -609,9 +617,12 @@ async fn get_generator_history(master_password: String) -> Result<Vec<(String, S
     let mut passwords: Vec<(String, String)> = Vec::new();
     for (password, date) in contents_json.iter() {
         let decrypted_password = decrypt(password.clone(), &key);
-        passwords.push((String::from_utf8(decrypted_password).unwrap(), date.to_string()));
+        passwords.push((
+            String::from_utf8(decrypted_password).unwrap(),
+            date.to_string(),
+        ));
     }
-    
+
     Ok(passwords)
 }
 

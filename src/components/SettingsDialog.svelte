@@ -1,6 +1,6 @@
 <script>
-	import { _ } from "svelte-i18n";
-	import { writable } from "svelte/store";
+    import { _ } from "svelte-i18n";
+    import { writable } from "svelte/store";
 
     export let isOpen = writable(false);
 
@@ -8,8 +8,8 @@
         isOpen.set(false);
     }
 
-    document.addEventListener('keyup', (e) => {
-        if (e.key === 'Escape') {
+    document.addEventListener("keyup", (e) => {
+        if (e.key === "Escape") {
             closeModal();
         }
     });
@@ -21,7 +21,12 @@
     <div class="modal" on:click={closeModal}>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-        <div class="modal-content" on:click={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        <div
+            class="modal-content"
+            on:click={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+        >
             <h2>{$_("settings.base")}</h2>
             <slot></slot>
         </div>
