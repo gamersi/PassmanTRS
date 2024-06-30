@@ -15,13 +15,28 @@
 
     import { passwords, masterPassword, isSettingsOpen } from "../utils/stores";
     import { _ } from "svelte-i18n";
+    import SearchBar from "../components/SearchBar.svelte";
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
-    passwords.subscribe((value) => {
-        console.log("passwords have been updated:", value);
+    let filteredPasswords = $passwords;
+
+    let search = "";
+
+    // TODO: change this when Svelte 5 will be released
+    $: filteredPasswords = $passwords.filter((password) => {
+        return (
+            password.name.toLowerCase().includes(search.toLowerCase()) ||
+            password.username.toLowerCase().includes(search.toLowerCase()) ||
+            password.url.toLowerCase().includes(search.toLowerCase()) ||
+            password.notes.toLowerCase().includes(search.toLowerCase())
+        );
     });
+
+    // passwords.subscribe((value) => {
+    //     console.log("passwords have been updated:", value);
+    // });
 
     function getPasswords() {
         let currentMasterPassword = localStorage.getItem("masterPassword");
@@ -64,7 +79,7 @@
     } else {
         console.log("getting passwords");
         listen<string>("refresh_passwords", (event) => {
-            console.log("refresh_passwords event received:", event.payload);
+            // console.log("refresh_passwords event received:", event.payload);
             getPasswords();
         });
 
@@ -89,14 +104,14 @@
         localStorage.removeItem("masterPassword");
         localStorage.removeItem("masterPassword_time");
         console.clear();
-        console.log("logged out");
+        // console.log("logged out");
     }
 </script>
 
 <main class="container">
     <div class="row">
         <h1>{$_("start.title")}</h1>
-        <!-- <SearchBar bind:value={$search} /> -->
+        <SearchBar bind:search />
         <div class="btn-group">
             <button
                 class="btn btn-icon btn-primary"
@@ -118,7 +133,7 @@
         {#if $passwords.length === 0}
             <p>{$_("start.placeholder.nopasswords")}</p>
         {/if}
-        {#each $passwords as password}
+        {#each filteredPasswords as password}
             <div class="card">
                 <div class="userInfo">
                     <h1 class="title">

@@ -31,6 +31,7 @@
   },
   "start": {
     "title": "Passwörter",
+    "search": "Suchen",
     "placeholder": {
       "name": "Kein Name",
       "username": "Kein Benutzername",
