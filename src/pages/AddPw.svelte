@@ -4,11 +4,14 @@
     import { _ } from "svelte-i18n";
     // @ts-ignore
     import MdRefresh from "svelte-icons/md/MdRefresh.svelte";
+    import PasswordStrengthMeter from "../components/PasswordStrengthMeter.svelte";
+    import { passwordStrength } from "../utils/utilities";
 
     // @ts-ignore
     const isTauri = typeof window !== "undefined" && window.__TAURI__;
 
     const masterPassword = localStorage.getItem("masterPassword");
+    let password = "";
 
     function addPassword(event: any) {
         if (!isTauri) {
@@ -69,12 +72,16 @@
                 class="form-control"
                 id="password"
                 placeholder={$_("addpw.password")}
+                bind:value={password}
             />
             <button
                 type="button"
                 class="btn btn-icon"
                 on:click={() => invoke("open_generator")}><MdRefresh /></button
             >
+            <PasswordStrengthMeter
+                passwordStrength={passwordStrength(password)}
+            />
         </div>
         <div class="row">
             <label for="url" class="form-label">{$_("addpw.url")}</label>

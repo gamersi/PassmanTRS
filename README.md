@@ -16,9 +16,9 @@
 - [x] password generation
 - [x] password generation history
 - [x] search *in the next release*
+- [x] password strength meter *in the next release*
 
 ## Upcoming Features
-- [ ] password strength meter
 - [ ] password sharing
 - [ ] password expiration
 - [ ] password import/export
