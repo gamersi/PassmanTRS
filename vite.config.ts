@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import sveltePreprocess from "svelte-preprocess";
+import { sveltePreprocess } from "svelte-preprocess";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
@@ -15,8 +15,8 @@ export default defineConfig(() => ({
   ],
 
   define: {
-    '__APP_VERSION__': JSON.stringify(process.env.npm_package_version),
-    '__BUILD_TIME__': JSON.stringify(new Date().toUTCString())
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    __BUILD_TIME__: JSON.stringify(new Date().toUTCString()),
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -33,8 +33,7 @@ export default defineConfig(() => ({
   build: {
     // Tauri supports es2021
     target: process.env.TAURI_PLATFORM == "windows" ? "chrome105" : "safari13",
-    // don't minify for debug builds
-    minify: !process.env.TAURI_DEBUG ? "esbuild" : false,
+    minify: process.env.TAURI_DEBUG ? false : ("esbuild" as "esbuild"),
     // produce sourcemaps for debug builds
     sourcemap: !!process.env.TAURI_DEBUG,
   },
