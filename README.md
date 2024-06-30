@@ -15,8 +15,8 @@
 - [x] master password change
 - [x] password generation
 - [x] password generation history
-- [x] search *in the next release*
-- [x] password strength meter *in the next release*
+- [x] search
+- [x] password strength meter
 
 ## Upcoming Features
 - [ ] password sharing

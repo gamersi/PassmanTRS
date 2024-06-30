@@ -1,6 +1,6 @@
 [package]
 name = "passwordmanager"
-version = "0.1.5"
+version = "0.1.6"
 description = "Password Manager made with Rust and Tauri"
 authors = ["gamersi"]
 license = ""
